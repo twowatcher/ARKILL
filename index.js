@@ -1,108 +1,115 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
+const ytdl = require('ytdl-core');
 const express = require('express');
+const app = express();
 
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildModeration
+        GatewayIntentBits.GuildVoiceStates
     ]
 });
 
 const PREFIX = '!';
-const WELCOME_CHANNEL_ID = '1411812421814849536'; // Canal de welcome
+const queue = new Map();
 
-// ==================== READY ====================
-client.once('ready', async () => {
-    console.log(`✅ Shadow Bot online como ${client.user.tag}`);
-    
-    // Status do bot
-    client.user.setActivity('nas sombras 🖤', { type: 'WATCHING' });
-
-    // Registra Slash Commands
-    const commands = [
-        new SlashCommandBuilder().setName('ping').setDescription('Responde com pong!'),
-        new SlashCommandBuilder().setName('ajuda').setDescription('Mostra os comandos'),
-    ];
-
-    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
-    try {
-        await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-        console.log('✅ Slash Commands registrados!');
-    } catch (error) {
-        console.error(error);
-    }
+// READY
+client.once('ready', () => {
+    console.log(`✅ PHANTOM Bot (Música) online! 👻`);
+    client.user.setActivity('Spotify & YouTube', { type: 'LISTENING' });
 });
 
-// ==================== WELCOME ====================
-client.on('guildMemberAdd', async member => {
-    const welcomeChannel = await client.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
-    
-    if (welcomeChannel) {
-        const embed = new EmbedBuilder()
-            .setColor(0x6b00ff)
-            .setTitle('👋 Novo Membro Chegou!')
-            .setDescription(`Bem-vindo(a) ao servidor, **${member.user.tag}**! 🖤\n\nEsperamos que você se divirta bastante por aqui!`)
-            .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
-            .setTimestamp();
-
-        welcomeChannel.send({ embeds: [embed] });
-    }
-});
-
-// ==================== COMANDOS COM PREFIXO ! ====================
+// PLAY
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
     if (!message.content.startsWith(PREFIX)) return;
 
     const args = message.content.slice(PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
+    const guildQueue = queue.get(message.guild.id);
 
-    if (command === 'ajuda' || command === 'comandos') {
-        const ajuda = `**🖤 Shadow Bot - Comandos**\n\n` +
-            `**Moderação:**\n` +
-            `\`!clear <número>\` - Apaga mensagens\n` +
-            `\`!ban @user\` - Bane usuário\n` +
-            `\`!kick @user\` - Expulsa usuário\n\n` +
-            `**Diversão:**\n` +
-            `\`!ping\` - Latência\n` +
-            `\`!avatar\` - Seu avatar\n` +
-            `\`!serverinfo\` - Info do servidor\n` +
-            `\`!meme\` - Meme`;
-        message.reply(ajuda);
+    if (command === 'play') {
+        if (!args[0]) return message.reply('❌ Use: `!play <link ou nome>`');
+
+        const voiceChannel = message.member.voice.channel;
+        if (!voiceChannel) return message.reply('❌ Entre em um canal de voz!');
+
+        let query = args.join(' ');
+
+        if (!guildQueue) {
+            const queueConstruct = { voiceChannel, textChannel: message.channel, connection: null, songs: [] };
+            queue.set(message.guild.id, queueConstruct);
+
+            const connection = joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: message.guild.id,
+                adapterCreator: message.guild.voiceAdapterCreator,
+            });
+            queueConstruct.connection = connection;
+
+            queueConstruct.songs.push(query);
+            playSong(message.guild.id);
+        } else {
+            guildQueue.songs.push(query);
+            message.reply(`✅ Adicionado à fila: **${query}**`);
+        }
     }
 
-    // !ping
-    if (command === 'ping') {
-        message.reply(`🏓 Pong! ${Date.now() - message.createdTimestamp}ms`);
+    if (command === 'skip') {
+        if (guildQueue && guildQueue.songs.length > 0) {
+            guildQueue.songs.shift();
+            playSong(message.guild.id);
+            message.reply('⏭️ Pulou a música!');
+        }
     }
 
-    // !clear
-    if (command === 'clear') {
-        if (!args[0]) return message.reply('Use: `!clear 10`');
-        const amount = parseInt(args[0]);
-        if (isNaN(amount) || amount < 1 || amount > 100) return message.reply('Número entre 1 e 100!');
-        
-        await message.channel.bulkDelete(amount + 1, true);
-        const msg = await message.channel.send(`✅ ${amount} mensagens apagadas!`);
-        setTimeout(() => msg.delete(), 4000);
+    if (command === 'stop') {
+        if (guildQueue) {
+            guildQueue.connection.destroy();
+            queue.delete(message.guild.id);
+        }
+        message.reply('⏹️ Parado!');
+    }
+
+    if (command === 'ajuda') {
+        message.reply('**Comandos de Música:**\n`!play <link>`\n`!skip`\n`!stop`');
     }
 });
 
-// ==================== SITE (com PORT para hospedagem) ====================
-const app = express();
-app.use(express.static('public'));
+async function playSong(guildId) {
+    const guildQueue = queue.get(guildId);
+    if (!guildQueue || guildQueue.songs.length === 0) {
+        if (guildQueue) guildQueue.connection.destroy();
+        queue.delete(guildId);
+        return;
+    }
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
-});
+    const song = guildQueue.songs[0];
+    try {
+        const resource = createAudioResource(ytdl(song, { filter: 'audioonly' }));
+        const player = createAudioPlayer();
+        guildQueue.connection.subscribe(player);
+        player.play(resource);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🌐 Site rodando na porta ${PORT}`);
-});
+        player.on(AudioPlayerStatus.Idle, () => {
+            guildQueue.songs.shift();
+            playSong(guildId);
+        });
+    } catch (e) {
+        console.error(e);
+        guildQueue.songs.shift();
+        playSong(guildId);
+    }
+}
 
 client.login(process.env.TOKEN);
+
+app.use(express.static('public'));
+app.get('/', (req, res) => res.sendFile(__dirname + '/public/index.html'));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🌐 Painel rodando`));
