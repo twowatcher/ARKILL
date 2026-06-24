@@ -16,13 +16,13 @@ const client = new Client({
 });
 
 const PREFIX = '!';
-const queue = new Map();           // Fila de música
-const xpData = new Map();          // Sistema de XP
+const queue = new Map();      // Fila de música
+const xpData = new Map();     // Sistema de XP
 const WELCOME_CHANNEL_ID = '1411812421814849536';
 
-// ==================== BOT PRONTO ====================
+// ==================== BOT INICIANDO ====================
 client.once('ready', () => {
-    console.log(`✅ PHANTOM Bot COMPLETO ONLINE! 👻`);
+    console.log(`✅ PHANTOM Bot ONLINE! 👻`);
     client.user.setActivity('nas sombras 👻', { type: 'WATCHING' });
 });
 
@@ -33,7 +33,7 @@ client.on('guildMemberAdd', async member => {
         const embed = new EmbedBuilder()
             .setColor(0x000000)
             .setTitle('👻 Novo Membro Chegou!')
-            .setDescription(`Bem-vindo(a) **${member.user.tag}** ao servidor!\n\nEsperamos que você se divirta!`)
+            .setDescription(`Bem-vindo(a) **${member.user.tag}**!\n\nEsperamos que você se divirta bastante aqui!`)
             .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
             .setTimestamp();
         channel.send({ embeds: [embed] });
@@ -44,14 +44,16 @@ client.on('guildMemberAdd', async member => {
 client.on('messageCreate', message => {
     if (message.author.bot) return;
 
-    if (!xpData.has(message.author.id)) xpData.set(message.author.id, { xp: 0, level: 1 });
+    if (!xpData.has(message.author.id)) {
+        xpData.set(message.author.id, { xp: 0, level: 1 });
+    }
 
     const user = xpData.get(message.author.id);
-    user.xp += Math.floor(Math.random() * 8) + 3;
+    user.xp += Math.floor(Math.random() * 10) + 5;
 
     if (user.xp >= user.level * 120) {
         user.level++;
-        user.xp = Math.floor(user.xp / 2);
+        user.xp = 0;
         message.reply(`🎉 **${message.author.username}** subiu para o **nível ${user.level}**!`);
     }
 });
@@ -78,15 +80,20 @@ client.on('messageCreate', async message => {
 
     // !play
     if (command === 'play') {
-        if (!args[0]) return message.reply('❌ Use: `!play <link ou nome>`');
-        // ... (código completo de música)
+        if (!args[0]) return message.reply('❌ Use: `!play <link do YouTube>`');
+
         const voiceChannel = message.member.voice.channel;
-        if (!voiceChannel) return message.reply('❌ Entre em um canal de voz!');
+        if (!voiceChannel) return message.reply('❌ Você precisa estar em um canal de voz!');
 
         const query = args.join(' ');
 
         if (!guildQueue) {
-            const queueConstruct = { voiceChannel, textChannel: message.channel, connection: null, songs: [] };
+            const queueConstruct = {
+                voiceChannel,
+                textChannel: message.channel,
+                connection: null,
+                songs: []
+            };
             queue.set(message.guild.id, queueConstruct);
 
             const connection = joinVoiceChannel({
@@ -103,28 +110,40 @@ client.on('messageCreate', async message => {
         }
     }
 
-    // !skip, !stop, !queue, !ajuda ...
-    if (command === 'skip' && guildQueue) {
+    // !skip
+    if (command === 'skip') {
+        if (!guildQueue || !guildQueue.songs.length) return message.reply('❌ Nada tocando!');
         guildQueue.songs.shift();
         playSong(message.guild.id);
-        message.reply('⏭️ Pulou!');
+        message.reply('⏭️ Música pulada!');
     }
 
-    if (command === 'stop' && guildQueue) {
-        guildQueue.songs = [];
-        guildQueue.connection.destroy();
-        queue.delete(message.guild.id);
-        message.reply('⏹️ Parado!');
+    // !stop
+    if (command === 'stop') {
+        if (guildQueue) {
+            guildQueue.songs = [];
+            guildQueue.connection.destroy();
+            queue.delete(message.guild.id);
+        }
+        message.reply('⏹️ Parado e desconectado!');
     }
 
+    // !ajuda
     if (command === 'ajuda' || command === 'comandos') {
-        message.reply('**👻 PHANTOM Bot**\n`!play` `!skip` `!stop` `!nivel` `!ping` `!ajuda`');
+        const embed = new EmbedBuilder()
+            .setColor(0x000000)
+            .setTitle('👻 PHANTOM Bot - Comandos')
+            .addFields(
+                { name: '🎵 Música', value: '`!play <link>`\n`!skip`\n`!stop`' },
+                { name: '📊 Outros', value: '`!ping`\n`!nivel`\n`!ajuda`' }
+            );
+        message.reply({ embeds: [embed] });
     }
 });
 
 async function playSong(guildId) {
     const guildQueue = queue.get(guildId);
-    if (!guildQueue || !guildQueue.songs.length) {
+    if (!guildQueue || guildQueue.songs.length === 0) {
         if (guildQueue) guildQueue.connection.destroy();
         queue.delete(guildId);
         return;
@@ -141,6 +160,7 @@ async function playSong(guildId) {
             playSong(guildId);
         });
     } catch (e) {
+        console.error(e);
         guildQueue.songs.shift();
         playSong(guildId);
     }
@@ -150,7 +170,11 @@ client.login(process.env.TOKEN);
 
 // ==================== SITE ====================
 app.use(express.static('public'));
-app.get('/', (req, res) => res.sendFile(__dirname + '/public/index.html'));
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
+});
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🌐 Painel rodando`));
+app.listen(PORT, () => {
+    console.log(`🌐 Painel rodando na porta ${PORT}`);
+});
