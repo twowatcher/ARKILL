@@ -6,18 +6,56 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers
+        GatewayIntentBits.GuildMembers // OBRIGATÓRIO PARA AS BOAS-VINDAS FUNCIONAREM
     ]
 });
 
 const PREFIX = '!';
 
-// Banco de dados temporário na memória para economia/jogos
+// Bancos de dados temporários na memória
 const banco = new Map();
+const configBoasVindas = new Map(); 
+// Estrutura por servidor: { canalId: string, cargoId: string, mensagem: string }
+
+// ==================== EVENTO: GUILD MEMBER ADD ====================
+client.on('guildMemberAdd', async (member) => {
+    const serverConfig = configBoasVindas.get(member.guild.id);
+    if (!serverConfig) return; // Se o servidor não configurou nada, não faz nada
+
+    // 1. Auto-role (Cargo Automático)
+    if (serverConfig.cargoId) {
+        const cargo = member.guild.roles.cache.get(serverConfig.cargoId);
+        if (cargo) {
+            await member.roles.add(cargo).catch(() => console.log(`Erro ao dar cargo para ${member.user.tag}`));
+        }
+    }
+
+    // 2. Mensagem de Boas-vindas no Canal
+    if (serverConfig.canalId) {
+        const canal = member.guild.channels.cache.get(serverConfig.canalId);
+        if (canal) {
+            // Substitui marcadores dinâmicos na mensagem customizada
+            let textoCustomizado = serverConfig.mensagem || "Seja bem-vindo(a) ao nosso servidor!";
+            textoCustomizado = textoCustomizado
+                .replace(/{membro}/g, `${member}`)
+                .replace(/{servidor}/g, `${member.guild.name}`)
+                .replace(/{total}/g, `${member.guild.memberCount}`);
+
+            const embed = new EmbedBuilder()
+                .setColor(0x00FF99)
+                .setTitle(`✨ Nova chegada!`)
+                .setDescription(textoCustomizado)
+                .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+                .setTimestamp();
+
+            await canal.send({ embeds: [embed] }).catch(() => {});
+        }
+    }
+});
 
 // ==================== READY ====================
 client.once('ready', () => {
-    console.log(`✅ BLUUDUD BOT ONLINE! 🔥`);
+    console.log(`✅ BLUUDUD BOT ONLINE COM BOAS-VINDAS CUSTOMIZÁVEIS! 🔥`);
     client.user.setActivity('fazendo moderação com estilo', { type: 'WATCHING' });
 });
 
@@ -28,6 +66,64 @@ client.on('messageCreate', async message => {
 
     const args = message.content.slice(PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
+
+    // Inicializa a memória de configuração para o servidor atual caso não exista
+    if (!configBoasVindas.has(message.guild.id)) {
+        configBoasVindas.set(message.guild.id, { canalId: null, cargoId: null, mensagem: null });
+    }
+    const dadosServidor = configBoasVindas.get(message.guild.id);
+
+    // ==================== COMANDOS DE CONFIGURAÇÃO DE BOAS-VINDAS ====================
+
+    // Configurar o canal de boas-vindas pelo nome
+    if (command === 'config-boasvindas') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply('❌ Apenas administradores podem configurar o sistema de boas-vindas.');
+        }
+        
+        const nomeCanal = args.join(' ');
+        if (!nomeCanal) return message.reply('Formato: `!config-boasvindas nome-do-canal` (ex: `!config-boasvindas geral`)');
+
+        const canalEncontrado = message.guild.channels.cache.find(c => c.name.toLowerCase() === nomeCanal.toLowerCase() && c.isTextBased());
+        
+        if (!canalEncontrado) return message.reply(`❌ Não encontrei nenhum canal de texto chamado \`${nomeCanal}\`.`);
+
+        dadosServidor.canalId = canalEncontrado.id;
+        message.reply(`✅ Canal de boas-vindas definido com sucesso para: ${canalEncontrado}!`);
+    }
+
+    // Configurar a mensagem de boas-vindas
+    if (command === 'config-mensagem') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply('❌ Apenas administradores podem usar este comando.');
+        }
+
+        const msgCustom = args.join(' ');
+        if (!msgCustom) {
+            return message.reply('Formato: `!config-mensagem Olá {membro}, bem-vindo ao {servidor}! Agora somos {total} membros.`\n\n*Variáveis aceitas: `{membro}`, `{servidor}`, `{total}`*');
+        }
+
+        dadosServidor.mensagem = msgCustom;
+        message.reply('✅ Mensagem de boas-vindas atualizada com sucesso!');
+    }
+
+    // Configurar o cargo inicial automático pelo nome
+    if (command === 'config-cargo') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+            return message.reply('❌ Apenas administradores podem usar este comando.');
+        }
+
+        const nomeCargo = args.join(' ');
+        if (!nomeCargo) return message.reply('Formato: `!config-cargo Nome do Cargo` (ex: `!config-cargo Membro`)');
+
+        const cargoEncontrado = message.guild.roles.cache.find(r => r.name.toLowerCase() === nomeCargo.toLowerCase());
+
+        if (!cargoEncontrado) return message.reply(`❌ Não encontrei nenhum cargo chamado \`${nomeCargo}\`.`);
+
+        dadosServidor.cargoId = cargoEncontrado.id;
+        message.reply(`✅ Cargo automático definido para: **${cargoEncontrado.name}**`);
+    }
+
 
     // ==================== MODERAÇÃO ORIGINAL ====================
 
@@ -79,9 +175,7 @@ client.on('messageCreate', async message => {
         message.channel.send(random);
     }
 
-    // ==================== +50 NOVOS COMANDOS ====================
-
-    // --- MODERAÇÃO ADICIONAL (5 comandos) ---
+    // --- MODERAÇÃO ADICIONAL ---
     if (command === 'lock') {
         if (!message.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) return message.reply('❌ Sem permissão.');
         await message.channel.permissionOverwrites.edit(message.guild.roles.everyone, { SendMessages: false });
@@ -117,7 +211,7 @@ client.on('messageCreate', async message => {
         message.reply(`📝 Nome de ${membro.user.username} alterado para ${novoNick}.`);
     }
 
-    // --- UTILITÁRIOS (10 comandos) ---
+    // --- UTILITÁRIOS ---
     if (command === 'serverinfo') {
         const embed = new EmbedBuilder()
             .setColor(0x00FF00)
@@ -166,14 +260,14 @@ client.on('messageCreate', async message => {
     }
 
     if (command === 'convite') {
-        message.reply('🔗 Quer me adicionar no seu servidor? (Link gerado no portal de desenvolvedores)');
+        message.reply('🔗 Quer me adicionar no seu servidor?');
     }
 
     if (command === 'calculadora' || command === 'calc') {
         const n1 = parseFloat(args[0]);
         const op = args[1];
         const n2 = parseFloat(args[2]);
-        if (isNaN(n1) || !op || isNaN(n2)) return message.reply('Formato: `!calc 5 + 5` (operações: +, -, *, /)');
+        if (isNaN(n1) || !op || isNaN(n2)) return message.reply('Formato: `!calc 5 + 5`');
         let res = 0;
         if (op === '+') res = n1 + n2;
         else if (op === '-') res = n1 - n2;
@@ -190,7 +284,7 @@ client.on('messageCreate', async message => {
         message.reply('🌐 **Nossos links:**\nSite: Em breve\nTwitter: Em breve');
     }
 
-    // --- DIVERSÃO & INTERAÇÃO (20 comandos) ---
+    // --- DIVERSÃO & INTERAÇÃO ---
     if (command === 'dado') {
         const faces = parseInt(args[0]) || 6;
         const result = Math.floor(Math.random() * faces) + 1;
@@ -204,18 +298,12 @@ client.on('messageCreate', async message => {
     }
 
     if (command === 'biscoito') {
-        const frases = [
-            "Você terá um dia incrível hoje!",
-            "A recompensa pelo bom trabalho é mais trabalho.",
-            "Amanhã você vai acordar mais rico (ou não).",
-            "Evite pessoas que não gostam de pão de queijo."
-        ];
-        const f = frases[Math.floor(Math.random() * frases.length)];
-        message.reply(`🥠 **Biscoito da Sorte:** ${f}`);
+        const frases = ["Você terá um dia incrível hoje!", "A recompensa pelo bom trabalho é mais trabalho.", "Amanhã você vai acordar mais rico (ou não)."];
+        message.reply(`🥠 **Biscoito da Sorte:** ${frases[Math.floor(Math.random() * frases.length)]}`);
     }
 
     if (command === '8ball') {
-        const respostas = ['Sim!', 'Com certeza', 'Talvez', 'Não conte com isso', 'Não', 'Definitivamente não.'];
+        const respostas = ['Sim!', 'Com certeza', 'Talvez', 'Não', 'Definitivamente não.'];
         if (!args.length) return message.reply('Faça uma pergunta.');
         message.reply(`🔮 ${respostas[Math.floor(Math.random() * respostas.length)]}`);
     }
@@ -239,34 +327,25 @@ client.on('messageCreate', async message => {
     }
 
     if (command === 'cantada') {
-        const cantadas = [
-            "Você não é Wi-Fi, mas sinto uma forte conexão.",
-            "Me chama de tabela periódica e diz que rola uma química entre nós.",
-            "Seu nome é Google? Porque você tem tudo o que eu procuro."
-        ];
+        const cantadas = ["Você não é Wi-Fi, mas sinto uma forte conexão.", "Me chama de tabela periódica e diz que rola uma química entre nós."];
         message.reply(`😏 ${cantadas[Math.floor(Math.random() * cantadas.length)]}`);
     }
 
     if (command === 'piada') {
-        const piadas = [
-            "Por que o jacaré tirou o jacarezinho da escola? Porque ele ré-ptil de ano.",
-            "O que o tomate foi fazer no banco? Tirar o extrato."
-        ];
+        const piadas = ["Por que o jacaré tirou o jacarezinho da escola? Porque ele ré-ptil de ano.", "O que o tomate foi fazer no banco? Tirar o extrato."];
         message.reply(`🤡 ${piadas[Math.floor(Math.random() * piadas.length)]}`);
     }
 
     if (command === 'atacar') {
         const alvo = message.mentions.users.first();
         if (!alvo) return message.reply('Quem você vai atacar?');
-        const dano = Math.floor(Math.random() * 100);
-        message.channel.send(`⚔️ ${message.author} atacou ${alvo} e causou **${dano}** de dano!`);
+        message.channel.send(`⚔️ ${message.author} atacou ${alvo} e causou **${Math.floor(Math.random() * 100)}** de dano!`);
     }
 
     if (command === 'elogiar') {
         const alvo = message.mentions.users.first();
         if (!alvo) return message.reply('Mencione alguém para elogiar.');
-        const elor = ["Você joga muito bem!", "Seu estilo é sensacional.", "Seu cérebro é gigante."];
-        message.channel.send(`✨ ${alvo}, ${message.author} te disse: ${elor[Math.floor(Math.random() * elor.length)]}`);
+        message.channel.send(`✨ ${alvo}, ${message.author} te disse: Seu estilo é sensacional!`);
     }
 
     if (command === 'reverso') {
@@ -276,16 +355,13 @@ client.on('messageCreate', async message => {
     }
 
     if (command === 'ship') {
-        const user1 = message.author;
         const user2 = message.mentions.users.first();
         if (!user2) return message.reply('Mencione o segundo alvo do cupido.');
-        const porcetagem = Math.floor(Math.random() * 101);
-        message.reply(`❤️ **SHIP:** ${user1.username} + ${user2.username} = **${porcetagem}%** de chance!`);
+        message.reply(`❤️ **SHIP:** ${message.author.username} + ${user2.username} = **${Math.floor(Math.random() * 101)}%**!`);
     }
 
     if (command === 'chances') {
-        const pergunta = args.join(' ');
-        if (!pergunta) return message.reply('Chances de que?');
+        if (!args.length) return message.reply('Chances de que?');
         message.reply(`📊 A chance disso acontecer é de **${Math.floor(Math.random() * 101)}%**.`);
     }
 
@@ -300,17 +376,16 @@ client.on('messageCreate', async message => {
     }
 
     if (command === 'dolar') {
-        message.reply('💵 O dólar hoje está alto, como sempre. Vá trabalhar!');
+        message.reply('💵 O dólar hoje está alto. Vá trabalhar!');
     }
 
     if (command === 'escolha') {
         if (args.length < 2) return message.reply('Coloque duas opções separadas por espaço.');
-        const item = args[Math.floor(Math.random() * args.length)];
-        message.reply(`🤔 Eu escolho com certeza: **${item}**`);
+        message.reply(`🤔 Eu escolho com certeza: **${args[Math.floor(Math.random() * args.length)]}**`);
     }
 
     if (command === 'diga') {
-        message.reply('Opa! Estou aqui ouvindo. Digite `!ajuda` para ver o que sei fazer.');
+        message.reply('Opa! Digite `!ajuda` para ver o que sei fazer.');
     }
 
     if (command === 'votar') {
@@ -321,44 +396,41 @@ client.on('messageCreate', async message => {
         await msg.react('👎');
     }
 
-    // --- MINI ECONOMIA EM MEMÓRIA (5 comandos) ---
+    // --- MINI ECONOMIA ---
     const iniciarConta = (id) => {
         if (!banco.has(id)) banco.set(id, { carteira: 100 });
     };
 
     if (command === 'saldo' || command === 'bal') {
         iniciarConta(message.author.id);
-        const conta = banco.get(message.author.id);
-        message.reply(`💰 Você tem **$${conta.carteira}** dinheiros na carteira.`);
+        message.reply(`💰 Você tem **$${banco.get(message.author.id).carteira}** dinheiros na carteira.`);
     }
 
     if (command === 'daily') {
         iniciarConta(message.author.id);
-        const conta = banco.get(message.author.id);
-        conta.carteira += 200;
-        message.reply('📆 Você resgatou seus **$200** dinheiros diários! Volte amanhã.');
+        banco.get(message.author.id).carteira += 200;
+        message.reply('📆 Você resgatou seus **$200** dinheiros diários!');
     }
 
     if (command === 'trabalhar' || command === 'work') {
         iniciarConta(message.author.id);
-        const conta = banco.get(message.author.id);
         const ganho = Math.floor(Math.random() * 80) + 20;
-        conta.carteira += ganho;
-        message.reply(`💼 Você trabalhou como moderador de Discord e ganhou **$${ganho}**.`);
+        banco.get(message.author.id).carteira += ganho;
+        message.reply(`💼 Você trabalhou e ganhou **$${ganho}**.`);
     }
 
     if (command === 'apostar' || command === 'gamble') {
         iniciarConta(message.author.id);
         const conta = banco.get(message.author.id);
         const valor = parseInt(args[0]);
-        if (isNaN(valor) || valor <= 0 || valor > conta.carteira) return message.reply('Coloque um valor válido dentro do seu saldo.');
+        if (isNaN(valor) || valor <= 0 || valor > conta.carteira) return message.reply('Coloque um valor válido.');
         
         if (Math.random() > 0.5) {
             conta.carteira += valor;
-            message.reply(`🎉 Boa! Você ganhou a aposta e levou **$${valor}**!`);
+            message.reply(`🎉 Ganhou **$${valor}**!`);
         } else {
             conta.carteira -= valor;
-            message.reply(`😭 F total. Você perdeu **$${valor}**.`);
+            message.reply(`😭 Perdeu **$${valor}**.`);
         }
     }
 
@@ -369,93 +441,75 @@ client.on('messageCreate', async message => {
         if (!alvo || isNaN(valor) || valor <= 0) return message.reply('Uso: `!doar @membro 50`');
         iniciarConta(alvo.id);
         
-        const minhaConta = banco.get(message.author.id);
-        if (minhaConta.carteira < valor) return message.reply('Saldo insuficiente.');
-        
-        minhaConta.carteira -= valor;
+        if (banco.get(message.author.id).carteira < valor) return message.reply('Saldo insuficiente.');
+        banco.get(message.author.id).carteira -= valor;
         banco.get(alvo.id).carteira += valor;
-        message.reply(`💸 Você doou **$${valor}** para ${alvo}. Que humilde!`);
+        message.reply(`💸 Você doou **$${valor}** para ${alvo}.`);
     }
 
-    // --- MINI GAMES (10 comandos) ---
+    // --- MINI GAMES ---
     if (command === 'jokenpo') {
         const opcoes = ['pedra', 'papel', 'tesoura'];
         const escolhaBot = opcoes[Math.floor(Math.random() * 3)];
         const escolhaUser = args[0]?.toLowerCase();
-        if (!opcoes.includes(escolhaUser)) return message.reply('Escolha entre `pedra`, `papel` ou `tesoura`.');
+        if (!opcoes.includes(escolhaUser)) return message.reply('Escolha `pedra`, `papel` ou `tesoura`.');
         
-        if (escolhaUser === escolhaBot) message.reply(`Empate! Eu também escolhi ${escolhaBot}.`);
-        else if (
-            (escolhaUser === 'pedra' && escolhaBot === 'tesoura') ||
-            (escolhaUser === 'papel' && escolhaBot === 'pedra') ||
-            (escolhaUser === 'tesoura' && escolhaBot === 'papel')
-        ) {
+        if (escolhaUser === escolhaBot) message.reply(`Empate! Escolhi ${escolhaBot}.`);
+        else if ((escolhaUser === 'pedra' && escolhaBot === 'tesoura') || (escolhaUser === 'papel' && escolhaBot === 'pedra') || (escolhaUser === 'tesoura' && escolhaBot === 'papel')) {
             message.reply(`Você ganhou! Escolhi ${escolhaBot}.`);
         } else {
-            message.reply(`Perdeu kkkk! Eu escolhi ${escolhaBot}.`);
+            message.reply(`Perdeu! Eu escolhi ${escolhaBot}.`);
         }
     }
 
     if (command === 'adivinhe') {
         const segredo = Math.floor(Math.random() * 10) + 1;
-        const palpite = parseInt(args[0]);
-        if (isNaN(palpite)) return message.reply('Tente adivinhar um número de 1 a 10 usando: `!adivinhe 5`');
-        if (palpite === segredo) message.reply('🎯 Acertou em cheio! Parabéns.');
+        if (parseInt(args[0]) === segredo) message.reply('🎯 Acertou em cheio!');
         else message.reply(`Errou! O número era **${segredo}**.`);
     }
 
-    if (command === 'ppt') {
-        message.reply('Abreviação rápida de jokenpo! Use `!jokenpo pedra/papel/tesoura`.');
-    }
-
-    if (command === 'fps') {
-        message.reply(`🎮 Meu ping de processamento gráfico virtual está em estáveis **${Math.floor(Math.random() * 60) + 180} FPS**.`);
-    }
-
+    if (command === 'ppt') message.reply('Use `!jokenpo pedra/papel/tesoura`.');
+    if (command === 'fps') message.reply(`🎮 Rodando a **${Math.floor(Math.random() * 60) + 180} FPS**.`);
+    
     if (command === 'hackear') {
         const alvo = message.mentions.users.first();
-        if (!alvo) return message.reply('Quem vamos hackear hoje?');
-        message.channel.send(`💻 Injetando vírus em ${alvo.username}...\n[████████████] 100%\nSenha do e-mail descoberta: \`batatinha123\``);
+        if (!alvo) return message.reply('Quem vamos hackear?');
+        message.reply(`💻 Injetando vírus em ${alvo.username}... Senha do e-mail: \`batatinha123\``);
     }
 
     if (command === 'roleta') {
-        if (Math.random() < 0.16) {
-            message.reply('💥 MORREU! (Brincadeira, mas você perdeu o jogo).');
-        } else {
-            message.reply('🏳️ Clique... a arma falhou. Você sobreviveu!');
-        }
+        if (Math.random() < 0.16) message.reply('💥 MORREU!');
+        else message.reply('🏳️ O tambor girou e a arma falhou. Sobreviveu!');
     }
 
     if (command === 'soco') {
         const alvo = message.mentions.users.first();
-        if (!alvo) return message.reply('Dê soco em quem?');
-        message.channel.send(`🥊 ${message.author} meteu um soco no olho do ${alvo}!`);
+        if (!alvo) return message.reply('Mencione alguém.');
+        message.channel.send(`🥊 ${message.author} meteu um soco em ${alvo}!`);
     }
 
     if (command === 'morder') {
         const alvo = message.mentions.users.first();
-        if (!alvo) return message.reply('Vai morder quem?');
+        if (!alvo) return message.reply('Mencione alguém.');
         message.channel.send(`😬 ${message.author} deu uma mordida em ${alvo}!`);
     }
 
     if (command === 'matar') {
         const alvo = message.mentions.users.first();
-        if (!alvo) return message.reply('Mate alguém ficticiamente.');
-        message.channel.send(`💀 ${message.author} derrubou ${alvo} no chão. F total!`);
+        if (!alvo) return message.reply('Mencione alguém.');
+        message.channel.send(`💀 ${message.author} derrubou ${alvo}!`);
     }
 
-    if (command === 'correr') {
-        message.reply('🏃💨 Você saiu correndo do canal de texto antes que dessem ruim pra você!');
-    }
-
+    if (command === 'correr') message.reply('🏃💨 Você saiu correndo!');
 
     // ==================== AJUDA ATUALIZADO ====================
     if (command === 'ajuda' || command === 'comandos') {
         const embed = new EmbedBuilder()
             .setColor(0xFF0000)
-            .setTitle('🔥 BLUUDUD BOT - COMANDOS (+50 NOVOS)')
+            .setTitle('🔥 BLUUDUD BOT - COMANDOS')
             .setDescription('O bot mais completo e zoeiro do pedaço!')
             .addFields(
+                { name: '⚙️ Configurações (Apenas Admins)', value: '`!config-boasvindas <nome-canal>`\n`!config-mensagem <mensagem>`\n`!config-cargo <nome-cargo>`' },
                 { name: '🛡️ Moderação Básica & Avançada', value: '`!clear` `!kick` `!ban` `!lock` `!unlock` `!slowmode` `!warn` `!setnick`' },
                 { name: '📊 Utilidades', value: '`!ping` `!serverinfo` `!avatar` `!userinfo` `!uptime` `!say` `!sorteio` `!convite` `!calc` `!regras` `!links`' },
                 { name: '😂 Diversão & Interação', value: '`!meme` `!dado` `!moeda` `!biscoito` `!8ball` `!abracar` `!beijar` `!tapa` `!cantada` `!piada` `!atacar` `!elogiar` `!reverso` `!ship` `!chances` `!gado` `!qi` `!dolar` `!escolha` `!diga` `!votar`' },
@@ -470,10 +524,10 @@ client.login(process.env.TOKEN);
 
 // ==================== SERVIDOR PARA RENDER ====================
 const express = require('express');
-const app = express();
+const app = report || express();
 
 app.get('/', (req, res) => {
-    res.send('Bluudud Bot está online! 🔥');
+    res.send('Bluudud Bot está online com Boas-Vindas! 🔥');
 });
 
 const PORT = process.env.PORT || 3000;
