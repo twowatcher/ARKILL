@@ -733,7 +733,8 @@ client.on('interactionCreate', async (interaction) => {
 
     if (commandName === 'gado') {
         const alvo = options.getUser('usuario') || interaction.user;
-        return interaction.reply(`🐂 ${alvo.username} é **${Math.floor(Math.random() * 101)}%** gado.`);
+        return interaction.reply(`🐂 ${alvo.username} é **${Math.floor(Math.random() * 101)}%** gado.
+        https://tenor.com/bNhJr.gif`);
     }
 
     if (commandName === 'qi') {
@@ -847,17 +848,20 @@ client.on('interactionCreate', async (interaction) => {
 
     if (commandName === 'soco') {
         const alvo = options.getUser('membro');
-        return interaction.reply(`🥊 ${interaction.user} meteu um soco em ${alvo}!`);
+        return interaction.reply(`🥊 ${interaction.user} meteu um soco em ${alvo}!
+            https://tenor.com/jItzcdDTiss.gif`);
     }
 
     if (commandName === 'morder') {
         const alvo = options.getUser('membro');
-        return interaction.reply(`😬 ${interaction.user} deu uma mordida em ${alvo}!`);
+        return interaction.reply(`😬 ${interaction.user} deu uma mordida em ${alvo}!
+            https://tenor.com/bXuSq.gif`);
     }
 
     if (commandName === 'matar') {
         const alvo = options.getUser('membro');
-        return interaction.reply(`💀 ${interaction.user} derrubou ${alvo} !https://tenor.com/bMwxK.gif`);
+        return interaction.reply(`💀 ${interaction.user} molestou ${alvo}!
+            https://tenor.com/vuJlRyJ0Zpu.gif`);
     }
 
     if (commandName === 'correr') {
