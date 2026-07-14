@@ -683,17 +683,17 @@ client.on('interactionCreate', async (interaction) => {
 
     if (commandName === 'abracar') {
         const alvo = options.getUser('membro');
-        return interaction.reply(`🤗 ${interaction.user} deu um abraço apertado em ${alvo}!`);
+        return interaction.reply(`🤗 ${interaction.user} deu um abraço apertado em ${alvo}! https://tenor.com/bFfSZLNFIus.gif`);
     }
 
     if (commandName === 'beijar') {
         const alvo = options.getUser('membro');
-        return interaction.reply(`💋 ${interaction.user} deu um beijo em ${alvo}!`);
+        return interaction.reply(`💋 ${interaction.user} deu um beijo guloso em ${alvo}! https://tenor.com/bioe7.gif`);
     }
 
     if (commandName === 'tapa') {
         const alvo = options.getUser('membro');
-        return interaction.reply(`💥 Ouuuch! ${interaction.user} deu um tapa estalado em ${alvo}!`https://tenor.com/bHBn8.gif);
+        return interaction.reply(`💥 Ouuuch! ${interaction.user} deu um tapa estalado em ${alvo}! https://tenor.com/bHBn8.gif');
     }
 
     if (commandName === 'cantada') {
@@ -708,12 +708,13 @@ client.on('interactionCreate', async (interaction) => {
 
     if (commandName === 'atacar') {
         const alvo = options.getUser('membro');
-        return interaction.reply(`⚔️ ${interaction.user} atacou ${alvo} e causou **${Math.floor(Math.random() * 100)}** de dano!`);
+        return interaction.reply(`⚔️ ${interaction.user} atacou gulosamente ${alvo} e causou **${Math.floor(Math.random() * 100)}** de danos gulosos!`);
     }
 
     if (commandName === 'elogiar') {
         const alvo = options.getUser('membro');
-        return interaction.reply(`✨ ${alvo}, ${interaction.user} te disse: Seu estilo é sensacional!`);
+        return interaction.reply(`✨ ${alvo}, ${interaction.user} te disse: voce é muito bonita/bonito! 
+            https://tenor.com/dhryROG66Uz.gif');
     }
 
     if (commandName === 'reverso') {
@@ -739,7 +740,7 @@ client.on('interactionCreate', async (interaction) => {
 
     if (commandName === 'qi') {
         const alvo = options.getUser('usuario') || interaction.user;
-        return interaction.reply(`🧠 O QI de ${alvo.username} é de **${Math.floor(Math.random() * 200)}**.`);
+        return interaction.reply(`🧠 O QI de ${alvo.username} é de **${Math.floor(Math.random() * 200)}**. https://tenor.com/bPFuO.gif`);
     }
 
     if (commandName === 'dolar') {
