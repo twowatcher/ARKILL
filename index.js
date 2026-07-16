@@ -16,861 +16,463 @@ const client = new Client({
     ]
 });
 
-// Bancos de dados temporários na memória
-const banco = new Map();
-const configBoasVindas = new Map();
+// In-memory databases
+const bank = new Map();
+const welcomeConfig = new Map();
 
-// Helper para iniciar conta bancária
-const iniciarConta = (id) => {
-    if (!banco.has(id)) banco.set(id, { carteira: 100 });
+// Helper to initialize bank account
+const initBankAccount = (userId) => {
+    if (!bank.has(userId)) {
+        bank.set(userId, { balance: 100 });
+    }
 };
 
-// ==================== REGISTRO DOS SLASH COMMANDS ====================
+// ==================== SLASH COMMANDS REGISTRATION ====================
 const commandsData = [
-    {
-        name: 'welcome-config',
-        description: 'Sets up the server´s welcome channel.',
-        options: [{
-            name: 'channel',
-            description: 'Select the text channel.',
-            type: ApplicationCommandOptionType.Channel,
-            channelTypes: [ChannelType.GuildText],
-            required: true
-        }]
-    },
-    {
-        name: 'message-config',
-        description: 'Sets the custom welcome message.',
-        options: [{
-            name: 'menssage',
-            description: 'Use {member}, {server}, and {total} to customize.',
-            type: ApplicationCommandOptionType.String,
-            required: true
-        }]
-    },
-    {
-        name: 'config-cargo',
-        description: 'Sets the automatic role given to new members.',
-        options: [{
-            name: 'cargo',
-            description: 'Select the role',
-            type: ApplicationCommandOptionType.Role,
-            required: true
-        }]
-    },
-    {
-        name: 'ping',
-        description: 'Shows the bot´s latency.'
-    },
-    {
-        name: 'clear',
-        description: 'Deletes a specific number of messages from the channel..',
-        options: [{
-            name: 'amount',
-            description: 'Number of messages (1 to 99)',
-            type: ApplicationCommandOptionType.Integer,
-            required: true
-        }]
-    },
-    {
-        name: 'Kick',
-        description: 'Kicks a member from the server.',
-        options: [
-            { name: 'member', description: 'Member to be expelled', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'reason', description: 'Reason for the kick', type: ApplicationCommandOptionType.String, required: false }
-        ]
-    },
-    {
-        name: 'ban',
-        description: 'Ban a server member. .',
-        options: [
-            { name: 'member', description: 'Member to be banned', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'reason', description: 'Reason for the ban', type: ApplicationCommandOptionType.String, required: false }
-        ]
-    },
-    {
-        name: 'meme',
-        description: 'Send a random meme or funny quote.'},
-    {
-        name: 'lock',
-        description: 'lock current text channel.'
-    },
-    {
-        name: 'unlock',
-        description: 'unlock current text channel.'
-    },
-    {
-        name: 'slow-mode',
-        description: 'set slow mode on the current channel.',
-        options: [{
-            name: 'seconds',
-            description: 'Time in seconds (0 to disable)',
-            type: ApplicationCommandOptionType.Integer,
-            required: true
-        }]
-    },
-    {
-        name: 'warn',
-        description: 'Issues a warning to draw a member´s attention.',
-        options: [
-            { name: 'member', description: 'Member to receive the warning', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'reason', description: 'Reason for the warning', type: ApplicationCommandOptionType.String, required: false }
-        ]
-    },
-    {
-        name: 'setnick',
-        description: 'changes a member´s nickname.',
-        options: [
-            { name: 'member', description: 'Select the member', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'nickname', description: 'New nickname', type: ApplicationCommandOptionType.String, required: true }
-        ]
-    },
-    {
-        name: 'serverinfo',
-        description: 'displays server information'
-    },
-    {
-        name: 'avatar',
-        description: 'Shows the avatar of a user or your own.',
-        options: [{
-            name: 'usuario',
-            description: 'Select the user (leave blank for yours)',
-            type: ApplicationCommandOptionType.User,
-            required: false
-        }]
-    },
-    {
-        name: 'userinfo',
-        description: 'Mostra informações de um usuário.',
-        options: [{
-            name: 'usuario',
-            description: 'Selecione o usuário (deixe em branco para o seu)',
-            type: ApplicationCommandOptionType.User,
-            required: false
-        }]
-    },
-    {
-        name: 'uptime',
-        description: 'Mostra há quanto tempo estou online.'
-    },
-    {
-        name: 'falar',
-        description: 'Faz o bot falar algo no canal.',
-        options: [{
-            name: 'mensagem',
-            description: 'O que eu devo falar?',
-            type: ApplicationCommandOptionType.String,
-            required: true
-        }]
-    },
-    {
-        name: 'sorteio',
-        description: 'Realiza um sorteio rápido entre os membros online/reais.',
-        options: [{
-            name: 'premio',
-            description: 'O que está sendo sorteado?',
-            type: ApplicationCommandOptionType.String,
-            required: true
-        }]
-    },
-    {
-        name: 'convite',
-        description: 'Link para me convidar para o seu servidor.'
-    },
-    {
-        name: 'calculadora',
-        description: 'Realiza uma operação matemática simples.',
-        options: [
-            { name: 'n1', description: 'Primeiro número', type: ApplicationCommandOptionType.Number, required: true },
-            { 
-                name: 'operacao', 
-                description: 'Escolha a operação', 
-                type: ApplicationCommandOptionType.String, 
-                required: true,
-                choices: [
-                    { name: 'Soma (+)', value: '+' },
-                    { name: 'Subtração (-)', value: '-' },
-                    { name: 'Multiplicação (*)', value: '*' },
-                    { name: 'Divisão (/)', value: '/' }
-                ]
-            },
-            { name: 'n2', description: 'Segundo número', type: ApplicationCommandOptionType.Number, required: true }
-        ]
-    },
-    {
-        name: 'regras',
-        description: 'Mostra as regras básicas do servidor.'
-    },
-    {
-        name: 'links',
-        description: 'Mostra as redes sociais e links úteis.'
-    },
-    {
-        name: 'dado',
-        description: 'Rola um dado de quantos lados você quiser.',
-        options: [{
-            name: 'lados',
-            description: 'Quantidade de lados (Padrão: 6)',
-            type: ApplicationCommandOptionType.Integer,
-            required: false
-        }]
-    },
-    {
-        name: 'moeda',
-        description: 'Joga Cara ou Coroa.'
-    },
-    {
-        name: 'biscoito',
-        description: 'Abre um biscoito da sorte.'
-    },
-    {
-        name: '8ball',
-        description: 'Faz uma pergunta para a bola de cristal.',
-        options: [{
-            name: 'pergunta',
-            description: 'Escreva a sua pergunta',
-            type: ApplicationCommandOptionType.String,
-            required: true
-        }]
-    },
-    {
-        name: 'abracar',
-        description: 'Dá um abraço em alguém do servidor.',
-        options: [{ name: 'membro', description: 'Quem você quer abraçar?', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'beijar',
-        description: 'Dá um beijinho em alguém do servidor.',
-        options: [{ name: 'membro', description: 'Quem você quer beijar?', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'tapa',
-        description: 'Dá um tapa estalado em alguém.',
-        options: [{ name: 'membro', description: 'Quem merece o tapa?', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'cantada',
-        description: 'Manda aquela cantada infalível.'
-    },
-    {
-        name: 'piada',
-        description: 'Conta uma piada digna do Tio do Pavê.'
-    },
-    {
-        name: 'atacar',
-        description: 'Ataca um usuário e calcula o dano.',
-        options: [{ name: 'membro', description: 'Quem você vai atacar?', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'elogiar',
-        description: 'Elogia um membro de forma amigável.',
-        options: [{ name: 'membro', description: 'Quem você quer elogiar?', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'reverso',
-        description: 'Inverte o texto enviado.',
-        options: [{ name: 'texto', description: 'Texto a ser invertido', type: ApplicationCommandOptionType.String, required: true }]
-    },
-    {
-        name: 'ship',
-        description: 'Calcula as chances de amor entre você e outra pessoa.',
-        options: [{ name: 'membro', description: 'O alvo do cupido', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'chances',
-        description: 'Calcula a porcentagem de chances de algo acontecer.',
-        options: [{ name: 'pergunta', description: 'Chances de que?', type: ApplicationCommandOptionType.String, required: true }]
-    },
-    {
-        name: 'gado',
-        description: 'Mede o nível de gado de um usuário.',
-        options: [{ name: 'usuario', description: 'Selecione o usuário (ou você mesmo)', type: ApplicationCommandOptionType.User, required: false }]
-    },
-    {
-        name: 'qi',
-        description: 'Calcula o QI mental de alguém.',
-        options: [{ name: 'usuario', description: 'Selecione o usuário (ou você mesmo)', type: ApplicationCommandOptionType.User, required: false }]
-    },
-    {
-        name: 'dolar',
-        description: 'Dá aquela informação sincera sobre o dólar.'
-    },
-    {
-        name: 'escolha',
-        description: 'Faz o bot decidir entre duas ou mais opções.',
-        options: [
-            { name: 'opcao1', description: 'Primeira opção', type: ApplicationCommandOptionType.String, required: true },
-            { name: 'opcao2', description: 'Segunda opção', type: ApplicationCommandOptionType.String, required: true }
-        ]
-    },
-    {
-        name: 'diga',
-        description: 'Mensagem de boas-vindas do bot.'
-    },
-    {
-        name: 'votar',
-        description: 'Cria uma enquete de sim ou não.',
-        options: [{ name: 'tema', description: 'Tema da votação', type: ApplicationCommandOptionType.String, required: true }]
-    },
-    {
-        name: 'saldo',
-        description: 'Mostra quantos dinheiros você tem.'
-    },
-    {
-        name: 'daily',
-        description: 'Resgata seus dinheiros diários.'
-    },
-    {
-        name: 'trabalhar',
-        description: 'Faça um bico e ganhe uns trocados.'
-    },
-    {
-        name: 'apostar',
-        description: 'Aposte seus dinheiros num Cara ou Coroa valendo o dobro.',
-        options: [{ name: 'valor', description: 'Quantidade a apostar', type: ApplicationCommandOptionType.Integer, required: true }]
-    },
-    {
-        name: 'doar',
-        description: 'Diga adeus ao seu suado dinheiro doando para um amigo.',
-        options: [
-            { name: 'membro', description: 'Membro beneficiado', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'valor', description: 'Quantidade a doar', type: ApplicationCommandOptionType.Integer, required: true }
-        ]
-    },
-    {
-        name: 'jokenpo',
-        description: 'Jogue Pedra, Papel ou Tesoura contra mim.',
-        options: [{
-            name: 'jogada',
-            description: 'Escolha seu elemento',
-            type: ApplicationCommandOptionType.String,
-            required: true,
-            choices: [
-                { name: 'Pedra 🪨', value: 'pedra' },
-                { name: 'Papel 📄', value: 'papel' },
-                { name: 'Tesoura ✂️', value: 'tesoura' }
-            ]
-        }]
-    },
-    {
-        name: 'adivinhe',
-        description: 'Adivinhe um número de 1 a 10.',
-        options: [{ name: 'numero', description: 'Seu palpite', type: ApplicationCommandOptionType.Integer, required: true }]
-    },
-    {
-        name: 'fps',
-        description: 'Calcula os frames por segundo do seu humor.'
-    },
-    {
-        name: 'hackear',
-        description: 'Faz um "cyberataque" simulado em um amigo.',
-        options: [{ name: 'membro', description: 'Alvo do ataque', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'roleta',
-        description: 'Roleta russa! Vai encarar a sorte?'
-    },
-    {
-        name: 'soco',
-        description: 'Mete um soco em alguém do servidor.',
-        options: [{ name: 'membro', description: 'Membro a apanhar', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'morder',
-        description: 'Dê uma mordida carinhosa (ou dolorida) em alguém.',
-        options: [{ name: 'membro', description: 'Membro a morder', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'matar',
-        description: 'Derrube seu adversário no chat.',
-        options: [{ name: 'membro', description: 'Membro a derrubar', type: ApplicationCommandOptionType.User, required: true }]
-    },
-    {
-        name: 'correr',
-        description: 'Foge de fininho do canal!'
-    },
-    {
-        name: 'ajuda',
-        description: 'Exibe a lista de comandos do bot.'
-    }
+    { name: 'welcome-config', description: 'Set the welcome channel for new members.', options: [{ name: 'channel', description: 'Select the text channel', type: ApplicationCommandOptionType.Channel, channelTypes: [ChannelType.GuildText], required: true }] },
+    { name: 'message-config', description: 'Set the custom welcome message.', options: [{ name: 'message', description: 'Use {member}, {server}, and {total} as placeholders.', type: ApplicationCommandOptionType.String, required: true }] },
+    { name: 'role-config', description: 'Set the auto-role given to new members.', options: [{ name: 'role', description: 'Select the role', type: ApplicationCommandOptionType.Role, required: true }] },
+    { name: 'ping', description: 'Check the bot\'s latency.' },
+    { name: 'clear', description: 'Delete a number of messages in the channel.', options: [{ name: 'amount', description: 'Number of messages (1-99)', type: ApplicationCommandOptionType.Integer, required: true }] },
+    { name: 'kick', description: 'Kick a member from the server.', options: [{ name: 'member', description: 'Member to kick', type: ApplicationCommandOptionType.User, required: true }, { name: 'reason', description: 'Reason for the kick', type: ApplicationCommandOptionType.String, required: false }] },
+    { name: 'ban', description: 'Ban a member from the server.', options: [{ name: 'member', description: 'Member to ban', type: ApplicationCommandOptionType.User, required: true }, { name: 'reason', description: 'Reason for the ban', type: ApplicationCommandOptionType.String, required: false }] },
+    { name: 'meme', description: 'Send a random meme or funny quote.' },
+    { name: 'lock', description: 'Lock the current text channel.' },
+    { name: 'unlock', description: 'Unlock the current text channel.' },
+    { name: 'slow-mode', description: 'Set slow mode for the current channel.', options: [{ name: 'seconds', description: 'Time in seconds (0 to disable)', type: ApplicationCommandOptionType.Integer, required: true }] },
+    { name: 'warn', description: 'Warn a member.', options: [{ name: 'member', description: 'Member to warn', type: ApplicationCommandOptionType.User, required: true }, { name: 'reason', description: 'Reason for the warning', type: ApplicationCommandOptionType.String, required: false }] },
+    { name: 'set-nick', description: 'Change a member\'s nickname.', options: [{ name: 'member', description: 'Select the member', type: ApplicationCommandOptionType.User, required: true }, { name: 'nickname', description: 'New nickname', type: ApplicationCommandOptionType.String, required: true }] },
+    { name: 'server-info', description: 'Display server information.' },
+    { name: 'avatar', description: 'Show a user\'s avatar.', options: [{ name: 'user', description: 'Select the user (leave blank for yourself)', type: ApplicationCommandOptionType.User, required: false }] },
+    { name: 'user-info', description: 'Show user information.', options: [{ name: 'user', description: 'Select the user (leave blank for yourself)', type: ApplicationCommandOptionType.User, required: false }] },
+    { name: 'uptime', description: 'Show how long the bot has been online.' },
+    { name: 'say', description: 'Make the bot say something in the channel.', options: [{ name: 'message', description: 'What should I say?', type: ApplicationCommandOptionType.String, required: true }] },
+    { name: 'giveaway', description: 'Quick giveaway among members.', options: [{ name: 'prize', description: 'What is being raffled?', type: ApplicationCommandOptionType.String, required: true }] },
+    { name: 'invite', description: 'Get the invite link for this bot.' },
+    { name: 'calculator', description: 'Perform a simple mathematical operation.', options: [
+        { name: 'number1', description: 'First number', type: ApplicationCommandOptionType.Number, required: true },
+        { name: 'operation', description: 'Choose the operation', type: ApplicationCommandOptionType.String, required: true, choices: [
+            { name: 'Add (+)', value: '+' }, { name: 'Subtract (-)', value: '-' },
+            { name: 'Multiply (*)', value: '*' }, { name: 'Divide (/)', value: '/' }
+        ]},
+        { name: 'number2', description: 'Second number', type: ApplicationCommandOptionType.Number, required: true }
+    ]},
+    { name: 'rules', description: 'Show the server rules.' },
+    { name: 'links', description: 'Show useful links and social media.' },
+    { name: 'roll', description: 'Roll a die with custom number of sides.', options: [{ name: 'sides', description: 'Number of sides (Default: 6)', type: ApplicationCommandOptionType.Integer, required: false }] },
+    { name: 'coin-flip', description: 'Flip a coin.' },
+    { name: 'fortune-cookie', description: 'Open a fortune cookie.' },
+    { name: '8ball', description: 'Ask the magic 8-ball a question.', options: [{ name: 'question', description: 'Write your question', type: ApplicationCommandOptionType.String, required: true }] },
+    { name: 'hug', description: 'Hug someone.', options: [{ name: 'member', description: 'Who do you want to hug?', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'kiss', description: 'Kiss someone.', options: [{ name: 'member', description: 'Who do you want to kiss?', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'slap', description: 'Slap someone.', options: [{ name: 'member', description: 'Who deserves a slap?', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'pickup-line', description: 'Send a smooth pickup line.' },
+    { name: 'joke', description: 'Tell a random joke.' },
+    { name: 'attack', description: 'Attack a user.', options: [{ name: 'member', description: 'Who do you want to attack?', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'compliment', description: 'Compliment a member.', options: [{ name: 'member', description: 'Who do you want to compliment?', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'reverse', description: 'Reverse the given text.', options: [{ name: 'text', description: 'Text to reverse', type: ApplicationCommandOptionType.String, required: true }] },
+    { name: 'ship', description: 'Calculate love compatibility.', options: [{ name: 'member', description: 'The target of Cupid', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'chances', description: 'Calculate the chance of something happening.', options: [{ name: 'question', description: 'Chance of what?', type: ApplicationCommandOptionType.String, required: true }] },
+    { name: 'cow-level', description: 'Check someone\'s simp level.', options: [{ name: 'user', description: 'Select the user', type: ApplicationCommandOptionType.User, required: false }] },
+    { name: 'iq', description: 'Calculate someone\'s IQ.', options: [{ name: 'user', description: 'Select the user', type: ApplicationCommandOptionType.User, required: false }] },
+    { name: 'dollar', description: 'Get a funny take on the dollar exchange rate.' },
+    { name: 'choose', description: 'Make the bot choose between options.', options: [
+        { name: 'option1', description: 'First option', type: ApplicationCommandOptionType.String, required: true },
+        { name: 'option2', description: 'Second option', type: ApplicationCommandOptionType.String, required: true }
+    ]},
+    { name: 'poll', description: 'Create a yes/no poll.', options: [{ name: 'topic', description: 'Poll topic', type: ApplicationCommandOptionType.String, required: true }] },
+    { name: 'balance', description: 'Check your balance.' },
+    { name: 'daily', description: 'Claim your daily reward.' },
+    { name: 'work', description: 'Work and earn money.' },
+    { name: 'bet', description: 'Bet on a coin flip.', options: [{ name: 'amount', description: 'Amount to bet', type: ApplicationCommandOptionType.Integer, required: true }] },
+    { name: 'donate', description: 'Donate money to a friend.', options: [
+        { name: 'member', description: 'Recipient', type: ApplicationCommandOptionType.User, required: true },
+        { name: 'amount', description: 'Amount to donate', type: ApplicationCommandOptionType.Integer, required: true }
+    ]},
+    { name: 'rock-paper-scissors', description: 'Play Rock Paper Scissors against the bot.', options: [{ name: 'choice', description: 'Your choice', type: ApplicationCommandOptionType.String, required: true, choices: [
+        { name: 'Rock 🪨', value: 'rock' }, { name: 'Paper 📄', value: 'paper' }, { name: 'Scissors ✂️', value: 'scissors' }
+    ]}]},
+    { name: 'guess', description: 'Guess a number between 1 and 10.', options: [{ name: 'number', description: 'Your guess', type: ApplicationCommandOptionType.Integer, required: true }] },
+    { name: 'fps', description: 'Check your mood in FPS.' },
+    { name: 'hack', description: 'Simulate hacking a friend.', options: [{ name: 'member', description: 'Target', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'russian-roulette', description: 'Play Russian Roulette.' },
+    { name: 'punch', description: 'Punch someone.', options: [{ name: 'member', description: 'Target', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'bite', description: 'Bite someone.', options: [{ name: 'member', description: 'Target', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'kill', description: '"Kill" someone in chat.', options: [{ name: 'member', description: 'Target', type: ApplicationCommandOptionType.User, required: true }] },
+    { name: 'run', description: 'Run away from the channel!' },
+    { name: 'help', description: 'Show all available commands.' }
 ];
 
-// ==================== EVENTO: GUILD MEMBER ADD ====================
+// ==================== WELCOME EVENT ====================
 client.on('guildMemberAdd', async (member) => {
-    const serverConfig = configBoasVindas.get(member.guild.id);
-    if (!serverConfig) return;
+    const config = welcomeConfig.get(member.guild.id);
+    if (!config) return;
 
-    if (serverConfig.cargoId) {
-        const cargo = member.guild.roles.cache.get(serverConfig.cargoId);
-        if (cargo) {
-            await member.roles.add(cargo).catch(() => console.log(`Erro ao dar cargo para ${member.user.tag}`));
-        }
+    if (config.roleId) {
+        const role = member.guild.roles.cache.get(config.roleId);
+        if (role) await member.roles.add(role).catch(() => {});
     }
 
-    if (serverConfig.canalId) {
-        const canal = member.guild.channels.cache.get(serverConfig.canalId);
-        if (canal) {
-            let textoCustomizado = serverConfig.mensagem || "Welcome {membro} to {servidor}! Now we are {total} members!";
-            textoCustomizado = textoCustomizado
-                .replace(/{membro}/g, `${member}`)
-                .replace(/{servidor}/g, `${member.guild.name}`)
-                .replace(/{total}/g, `${member.guild.memberCount}`);
+    if (config.channelId) {
+        const channel = member.guild.channels.cache.get(config.channelId);
+        if (channel) {
+            let message = config.message || "Welcome {member} to {server}! We now have {total} members!";
+            message = message
+                .replace(/{member}/g, `${member}`)
+                .replace(/{server}/g, member.guild.name)
+                .replace(/{total}/g, member.guild.memberCount);
 
             const embed = new EmbedBuilder()
                 .setColor(0x00FF99)
-                .setTitle(`✨ Nova chegada!`)
-                .setDescription(textoCustomizado)
-                .setThumbnail(member.user.displayAvatarURL({ forceStatic: false }))
+                .setTitle('✨ New Member!')
+                .setDescription(message)
+                .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
                 .setTimestamp();
 
-            await canal.send({ embeds: [embed] }).catch(() => {});
+            await channel.send({ embeds: [embed] }).catch(() => {});
         }
     }
 });
 
-// ==================== READY (REGISTRO GLOBAL AUTOMÁTICO) ====================
+// ==================== BOT READY ====================
 client.once('ready', async () => {
-    console.log(`✅ BLUUDUD BOT ONLINE COM SLASH COMMANDS! 🔥`);
-    client.user.setActivity('fazendo moderação com estilo', { type: 3 });
+    console.log(`✅ ${client.user.tag} is online!`);
+    client.user.setActivity('moderating with style', { type: 3 });
 
     try {
-        console.log('Iniciando o registro dos Slash Commands...');
         await client.application.commands.set(commandsData);
-        console.log('✅ Todos os Slash Commands foram registrados globalmente com sucesso!');
+        console.log('✅ All Slash Commands registered successfully!');
     } catch (error) {
-        console.error('Erro ao registrar Slash Commands:', error);
+        console.error('Failed to register commands:', error);
     }
 });
 
-// ==================== EXECUÇÃO DOS INTERACTION / SLASH COMMANDS ====================
+// ==================== COMMAND HANDLER ====================
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
-    const { commandName, options, guild, member, channel } = interaction;
+    const { commandName, options, guild, member, channel, user } = interaction;
 
-    // Inicializa a memória de configuração para o servidor caso não exista
-    if (!configBoasVindas.has(guild.id)) {
-        configBoasVindas.set(guild.id, { canalId: null, cargoId: null, mensagem: null });
+    if (!welcomeConfig.has(guild.id)) {
+        welcomeConfig.set(guild.id, { channelId: null, roleId: null, message: null });
     }
-    const dadosServidor = configBoasVindas.get(guild.id);
+    const config = welcomeConfig.get(guild.id);
 
-    // --- CONFIGURAÇÕES DE BOAS-VINDAS ---
+    // ===================== CONFIG =====================
     if (commandName === 'welcome-config') {
-        if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return interaction.reply({ content: '❌ Only administrators can configure the welcome system.', ephemeral: true });
-        }
-        const canal = options.getChannel('channel');
-        dadosServidor.canalId = canal.id;
-        return interaction.reply({ content: `✅ Welcome channel successfully set to: ${canal}!`, ephemeral: true });
+        if (!member.permissions.has(PermissionsBitField.Flags.Administrator))
+            return interaction.reply({ content: '❌ Only administrators can use this command.', ephemeral: true });
+        config.channelId = options.getChannel('channel').id;
+        return interaction.reply({ content: `✅ Welcome channel set successfully!`, ephemeral: true });
     }
 
     if (commandName === 'message-config') {
-        if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return interaction.reply({ content: '❌ Only administrators can configure the welcome message.', ephemeral: true });
-        }
-        const msgCustom = options.getString('message');
-        dadosServidor.mensagem = msgCustom;
-        return interaction.reply({ content: '✅ Welcome message successfully updated!', ephemeral: true });
+        if (!member.permissions.has(PermissionsBitField.Flags.Administrator))
+            return interaction.reply({ content: '❌ Only administrators can use this command.', ephemeral: true });
+        config.message = options.getString('message');
+        return interaction.reply({ content: '✅ Welcome message updated!', ephemeral: true });
     }
 
-    if (commandName === 'config-cargo') {
-        if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return interaction.reply({ content: '❌ Only administrators can configure the welcome role.', ephemeral: true });
-        }
-        const cargo = options.getRole('cargo');
-        dadosServidor.cargoId = cargo.id;
-        return interaction.reply({ content: `✅ Automatic role set to: **${cargo.name}**`, ephemeral: true });
+    if (commandName === 'role-config') {
+        if (!member.permissions.has(PermissionsBitField.Flags.Administrator))
+            return interaction.reply({ content: '❌ Only administrators can use this command.', ephemeral: true });
+        config.roleId = options.getRole('role').id;
+        return interaction.reply({ content: '✅ Auto-role configured!', ephemeral: true });
     }
 
-    // --- UTILS & MODERAÇÃO ---
-    if (commandName === 'ping') {
-        return interaction.reply(`🏓 Pong! ${Date.now() - interaction.createdTimestamp}ms`);
-    }
+    // ===================== MODERATION =====================
+    if (commandName === 'ping') return interaction.reply(`🏓 Pong! ${Date.now() - interaction.createdTimestamp}ms`);
 
-    if (commandName === 'Clear') {
-        if (!member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
-            return interaction.reply({ content: '❌ You don\'t have permission to do that, bro.', ephemeral: true });
-        }
-        const qtd = options.getInteger('amount');
-        if (qtd < 1 || qtd > 100) {
-            return interaction.reply({ content: '❌ Use a number between 1 and 100.', ephemeral: true });
-        }
-        
-        await interaction.deferReply({ ephemeral: true });
-        await channel.bulkDelete(qtd, true);
-        await interaction.editReply(`🧹 I cleared ${qtd} messages, buddy!`);
+    if (commandName === 'clear') {
+        if (!member.permissions.has(PermissionsBitField.Flags.ManageMessages))
+            return interaction.reply({ content: '❌ You lack permission to manage messages.', ephemeral: true });
+        const amount = options.getInteger('amount');
+        if (amount < 1 || amount > 99) return interaction.reply({ content: '❌ Amount must be between 1 and 99.', ephemeral: true });
+        await channel.bulkDelete(amount, true);
+        return interaction.reply(`🧹 Cleared ${amount} messages.`);
     }
 
     if (commandName === 'kick') {
-        if (!member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
-            return interaction.reply({ content: '❌ You don\'t have permission to kick members.', ephemeral: true });
-        }
-        const user = options.getUser('member');
-        const motivo = options.getString('motivo') || 'No reason specified';
-        const guildMember = await guild.members.fetch(user.id).catch(() => null);
-        
-        if (!guildMember) return interaction.reply({ content: 'Member not found in this server.', ephemeral: true });
-        
-        await guildMember.kick(motivo);
-        return interaction.reply(`🚪 **${user.tag}** was kicked. Reason: ${motivo}`);
+        if (!member.permissions.has(PermissionsBitField.Flags.KickMembers))
+            return interaction.reply({ content: '❌ You lack permission to kick members.', ephemeral: true });
+        const target = options.getUser('member');
+        const reason = options.getString('reason') || 'No reason provided';
+        const targetMember = await guild.members.fetch(target.id).catch(() => null);
+        if (!targetMember) return interaction.reply({ content: '❌ Member not found.', ephemeral: true });
+        await targetMember.kick(reason);
+        return interaction.reply(`🚪 **${target.tag}** has been kicked.`);
     }
 
     if (commandName === 'ban') {
-        if (!member.permissions.has(PermissionsBitField.Flags.BanMembers)) {
-            return interaction.reply({ content: '❌ You don\'t have permission to ban members.', ephemeral: true });
-        }
-        const user = options.getUser('member');
-        const motivo = options.getString('reason') || 'Violated server rules';
-        const guildMember = await guild.members.fetch(user.id).catch(() => null);
-
-        if (!guildMember) return interaction.reply({ content: 'Member not found in this server.', ephemeral: true });
-
-        await guildMember.ban({ reason: motivo });
-        return interaction.reply(`🔨 **${user.tag}** was banned. Reason: ${motivo}`);
-    }
-
-    if (commandName === 'meme') {
-        const memes = [
-            "https://klipy.com/gifs/shrek-rizz-shrek-meme",
-            "Why did the programmer fail? Because he used too many 'break' statements!",
-            "Everything in life passes, except my desire to eat pizza.",
-            "The code works, but I don't know why. Don't touch it.",
-            "I'm trying to pretend I understood what the person said after they repeated it 3 times."
-        ];
-        const random = memes[Math.floor(Math.random() * memes.length)];
-        return interaction.reply(random);
+        if (!member.permissions.has(PermissionsBitField.Flags.BanMembers))
+            return interaction.reply({ content: '❌ You lack permission to ban members.', ephemeral: true });
+        const target = options.getUser('member');
+        const reason = options.getString('reason') || 'Violated server rules';
+        const targetMember = await guild.members.fetch(target.id).catch(() => null);
+        if (!targetMember) return interaction.reply({ content: '❌ Member not found.', ephemeral: true });
+        await targetMember.ban({ reason });
+        return interaction.reply(`🔨 **${target.tag}** has been banned.`);
     }
 
     if (commandName === 'lock') {
-        if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-            return interaction.reply({ content: '❌ You don\'t have permission.', ephemeral: true });
-        }
+        if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels))
+            return interaction.reply({ content: '❌ You lack permission.', ephemeral: true });
         await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: false });
-        return interaction.reply('🔒 Channel locked! Silence in the courtroom.');
+        return interaction.reply('🔒 Channel locked!');
     }
 
     if (commandName === 'unlock') {
-        if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-            return interaction.reply({ content: '❌ You don\'t have permission.', ephemeral: true });
-        }
+        if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels))
+            return interaction.reply({ content: '❌ You lack permission.', ephemeral: true });
         await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: null });
-        return interaction.reply('🔓 Channel unlocked. You can talk now.');
+        return interaction.reply('🔓 Channel unlocked!');
     }
 
-    if (commandName === 'Slow-mode') {
-        if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-            return interaction.reply({ content: '❌ You don\'t have permission.', ephemeral: true });
-        }
-        const tempo = options.getInteger('seconds');
-        await channel.setRateLimitPerUser(tempo);
-        return interaction.reply(`⏳ Slow mode defined for ${tempo} seconds.`);
+    if (commandName === 'slow-mode') {
+        if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels))
+            return interaction.reply({ content: '❌ You lack permission.', ephemeral: true });
+        const seconds = options.getInteger('seconds');
+        await channel.setRateLimitPerUser(seconds);
+        return interaction.reply(`⏳ Slow mode set to ${seconds} seconds.`);
     }
 
     if (commandName === 'warn') {
-        const user = options.getUser('member');
-        const motivo = options.getString('reason') || 'Unusual behavior';
-        return interaction.reply(`⚠️ **WARNING:** ${user} was warned for: *${motivo}*. Stay alert!`);
+        const target = options.getUser('member');
+        const reason = options.getString('reason') || 'No reason provided';
+        return interaction.reply(`⚠️ **Warning:** ${target} was warned. Reason: ${reason}`);
     }
 
-    if (commandName === 'setnick') {
-        if (!member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) {
-            return interaction.reply({ content: '❌ You don\'t have permission.', ephemeral: true });
-        }
-        const user = options.getUser('member');
-        const novoNick = options.getString('nickname');
-        const targetMember = await guild.members.fetch(user.id).catch(() => null);
-
-        if (!targetMember) return interaction.reply({ content: '❌ Invalid member.', ephemeral: true });
-        await targetMember.setNickname(novoNick);
-        return interaction.reply(`📝 Name of ${user.username} changed to ${novoNick}.`);
+    if (commandName === 'set-nick') {
+        if (!member.permissions.has(PermissionsBitField.Flags.ManageNicknames))
+            return interaction.reply({ content: '❌ You lack permission.', ephemeral: true });
+        const target = options.getUser('member');
+        const nickname = options.getString('nickname');
+        const targetMember = await guild.members.fetch(target.id).catch(() => null);
+        if (!targetMember) return interaction.reply({ content: '❌ Member not found.', ephemeral: true });
+        await targetMember.setNickname(nickname);
+        return interaction.reply(`📝 Nickname of ${target.username} changed to **${nickname}**.`);
     }
 
-    if (commandName === 'serverinfo') {
+    // ===================== UTILITIES =====================
+    if (commandName === 'server-info') {
         const embed = new EmbedBuilder()
             .setColor(0x00FF00)
-            .setTitle(`📊 Information about ${guild.name}`)
+            .setTitle(`📊 ${guild.name} Information`)
             .addFields(
                 { name: 'Members', value: `${guild.memberCount}`, inline: true },
-                { name: 'Created at', value: `${guild.createdAt.toLocaleDateString('pt-BR')}`, inline: true }
+                { name: 'Created', value: guild.createdAt.toLocaleDateString('en-US'), inline: true }
             );
         return interaction.reply({ embeds: [embed] });
     }
 
     if (commandName === 'avatar') {
-        const usuario = options.getUser('user') || interaction.user;
-        return interaction.reply(`🖼️ Avatar of ${usuario.username}: ${usuario.displayAvatarURL({ forceStatic: false, size: 1024 })}`);
+        const target = options.getUser('user') || user;
+        return interaction.reply(`🖼️ **${target.username}'s Avatar:**\n${target.displayAvatarURL({ dynamic: true, size: 1024 })}`);
     }
 
-    if (commandName === 'userinfo') {
-        const usuario = options.getUser('user') || interaction.user;
-        return interaction.reply(`👤 **Name:** ${usuario.tag}\n🆔 **ID:** ${usuario.id}\n📅 **Account created on:** ${usuario.createdAt.toLocaleDateString('pt-BR')}`);
+    if (commandName === 'user-info') {
+        const target = options.getUser('user') || user;
+        return interaction.reply(`👤 **Name:** ${target.tag}\n🆔 **ID:** ${target.id}\n📅 **Created:** ${target.createdAt.toLocaleDateString('en-US')}`);
     }
 
     if (commandName === 'uptime') {
-        let totalSeconds = (client.uptime / 1000);
-        let days = Math.floor(totalSeconds / 86400);
+        let totalSeconds = Math.floor(client.uptime / 1000);
+        const days = Math.floor(totalSeconds / 86400);
         totalSeconds %= 86400;
-        let hours = Math.floor(totalSeconds / 3600);
+        const hours = Math.floor(totalSeconds / 3600);
         totalSeconds %= 3600;
-        let minutes = Math.floor(totalSeconds / 60);
-        let seconds = Math.floor(totalSeconds % 60);
-        return interaction.reply(`⏰ I've been online for: \`${days}d ${hours}h ${minutes}m ${seconds}s\``);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return interaction.reply(`⏰ Online for: \`${days}d ${hours}h ${minutes}m ${seconds}s\``);
     }
 
     if (commandName === 'say') {
-        const fala = options.getString('message');
-        await interaction.reply({ content: 'Sending...', ephemeral: true });
-        return channel.send(fala);
+        const text = options.getString('message');
+        await interaction.deferReply({ ephemeral: true });
+        return channel.send(text);
     }
 
-    if (commandName === 'draw') {
-        const premio = options.getString('prize');
-        const totalMembers = await guild.members.fetch();
-        const ganhador = totalMembers.filter(m => !m.user.bot).random();
-        if (!ganhador) return interaction.reply('There aren´t enough members to hold a draw..');
-        return interaction.reply(`🎉 **DRAW!** Prize: **${premio}**\n🏆 Winner: ${ganhador}! Congratulations!`);
+    if (commandName === 'giveaway') {
+        const prize = options.getString('prize');
+        const members = await guild.members.fetch();
+        const winner = members.filter(m => !m.user.bot).random();
+        if (!winner) return interaction.reply('Not enough members.');
+        return interaction.reply(`🎉 **GIVEAWAY!** Prize: **${prize}**\n🏆 Winner: ${winner}!`);
     }
 
     if (commandName === 'invite') {
-        return interaction.reply('🔗 Do you want to add me to your server? Use: https://discord.com/api/oauth2/authorize?client_id=' + client.user.id + '&permissions=8&scope=bot%20applications.commands');
+        return interaction.reply(`🔗 Invite me using this link:\nhttps://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands`);
     }
 
     if (commandName === 'calculator') {
-        const n1 = options.getNumber('n1');
+        const n1 = options.getNumber('number1');
         const op = options.getString('operation');
-        const n2 = options.getNumber('n2');
-        let res = 0;
-        if (op === '+') res = n1 + n2;
-        else if (op === '-') res = n1 - n2;
-        else if (op === '*') res = n1 * n2;
-        else if (op === '/') res = n1 / n2;
-        return interaction.reply(`🔢 Result: **${res}**`);
+        const n2 = options.getNumber('number2');
+        let result;
+        if (op === '+') result = n1 + n2;
+        else if (op === '-') result = n1 - n2;
+        else if (op === '*') result = n1 * n2;
+        else if (op === '/') result = n1 / n2;
+        return interaction.reply(`🔢 **Result:** ${result}`);
     }
 
-    if (commandName === 'rules') {
-        return interaction.reply('📜 **Server Rules:**\n1. Don\'t be boring.\n2. Don\'t flood.\n3. Respect everyone.');
+    if (commandName === 'rules') return interaction.reply('📜 **Server Rules:**\n1. Be respectful.\n2. No spam.\n3. Have fun!');
+    if (commandName === 'links') return interaction.reply('🌐 **Useful Links:**\n- Website: Coming soon\n- Twitter: Coming soon');
+
+    // ===================== FUN COMMANDS =====================
+    if (commandName === 'meme') {
+        const memes = ["Why do programmers prefer dark mode? Because light attracts bugs.", "The code works... I don't know why. Don't touch it."];
+        return interaction.reply(memes[Math.floor(Math.random() * memes.length)]);
     }
 
-    if (commandName === 'links') {
-        return interaction.reply('🌐 **Our links:**\nSite: Coming soon\nTwitter: Coming soon');
+    if (commandName === 'roll') {
+        const sides = options.getInteger('sides') || 6;
+        const result = Math.floor(Math.random() * sides) + 1;
+        return interaction.reply(`🎲 You rolled a ${sides}-sided die and got: **${result}**`);
     }
 
-    // --- MINI GAMES & DIVERSÃO ---
-    if (commandName === 'yatzy') {
-        const faces = options.getInteger('sides') || 6;
-        const result = Math.floor(Math.random() * faces) + 1;
-        return interaction.reply(`🎲 You rolled a ${faces}-sided die and got: **${result}**`);
+    if (commandName === 'coin-flip') {
+        const result = Math.random() > 0.5 ? 'Heads' : 'Tails';
+        return interaction.reply(`🪙 It landed on **${result}**!`);
     }
 
-    if (commandName === 'coin') {
-        const sides = ['Heads', 'Tails'];
-        const chosen = sides[Math.floor(Math.random() * sides.length)];
-        return interaction.reply(`🪙 It landed on... **${chosen}**!`);
-    }
-
-    if (commandName === 'cookie') {
-        const frases = ["You will have an incredible day today!", "The reward for good work is more work.", "Tomorrow you will wake up richer (or not)."];
-        return interaction.reply(`🥠 **Lucky Cookie:** ${frases[Math.floor(Math.random() * frases.length)]}`);
+    if (commandName === 'fortune-cookie') {
+        const fortunes = ["You will have an amazing day!", "The reward for good work is more work.", "Great things are coming your way."];
+        return interaction.reply(`🥠 **Fortune Cookie:** ${fortunes[Math.floor(Math.random() * fortunes.length)]}`);
     }
 
     if (commandName === '8ball') {
-        const respostas = ['yes!!', 'Certainly', 'Maybe', 'NNo', 'Definitely not.'];
-        const pergunta = options.getString('question');
-        return interaction.reply(`🔮 **Question:** *${pergunta}*\n**Answer:** ${respostas[Math.floor(Math.random() * respostas.length)]}`);
+        const answers = ['Yes!', 'No.', 'Maybe.', 'Definitely!', 'Ask again later.'];
+        const question = options.getString('question');
+        return interaction.reply(`🔮 **Question:** ${question}\n**Answer:** ${answers[Math.floor(Math.random() * answers.length)]}`);
     }
 
-    if (commandName === 'hug') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`🤗 ${interaction.user} gave a tight hug to ${alvo}!`);
+    if (commandName === 'hug') return interaction.reply(`🤗 ${user} hugged ${options.getUser('member')}!`);
+    if (commandName === 'kiss') return interaction.reply(`💋 ${user} kissed ${options.getUser('member')}!`);
+    if (commandName === 'slap') return interaction.reply(`💥 ${user} slapped ${options.getUser('member')}!`);
+    if (commandName === 'pickup-line') {
+        const lines = ["Are you Wi-Fi? Because I'm feeling a connection.", "Do you have a map? I keep getting lost in your eyes."];
+        return interaction.reply(lines[Math.floor(Math.random() * lines.length)]);
     }
-
-    if (commandName === 'kiss') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`💋 ${interaction.user} gave a passionate kiss to ${alvo}!`);
-    }
-
-    if (commandName === 'slap') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`💥 Ouuuch! ${interaction.user} gave a hard slap to ${alvo}! `);
-    }
-
-    if (commandName === 'pickup line') {
-        const cantadas = ["You are not Wi-Fi, but I feel a strong connection.", "Call me periodic table and say there's chemistry between us."];
-        return interaction.reply(`😏 ${cantadas[Math.floor(Math.random() * cantadas.length)]}`);
-    }
-
     if (commandName === 'joke') {
-        const piadas = ["Why did the alligator take the little alligator out of school? Because he was a reptile who got held back a year.", "What did the tomato do at the bank? It took out a loan."];
-        return interaction.reply(`🤡 ${piadas[Math.floor(Math.random() * piadas.length)]}`);
+        const jokes = ["Why don't skeletons fight each other? They don't have the guts.", "Why did the scarecrow win an award? He was outstanding in his field."];
+        return interaction.reply(jokes[Math.floor(Math.random() * jokes.length)]);
     }
 
-    if (commandName === 'attack') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`⚔️ ${interaction.user} attacked ${alvo} and caused **${Math.floor(Math.random() * 100)}** damage!`);
-    }
-
-    if (commandName === 'compliment') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`✨ ${alvo}, ${interaction.user} told you: "You're amazing and deserve all the success in the world!"`);
-    }
-
-    if (commandName === 'reverse') {
-        const texto = options.getString('text');
-        return interaction.reply(texto.split('').reverse().join(''));
-    }
-
+    if (commandName === 'attack') return interaction.reply(`⚔️ ${user} attacked ${options.getUser('member')} and dealt **${Math.floor(Math.random() * 100)}** damage!`);
+    if (commandName === 'compliment') return interaction.reply(`✨ ${options.getUser('member')}, ${user} says you're amazing!`);
+    if (commandName === 'reverse') return interaction.reply(options.getString('text').split('').reverse().join(''));
     if (commandName === 'ship') {
-        const user2 = options.getUser('member');
-        return interaction.reply(`❤️ **SHIP:** ${interaction.user.username} + ${user2.username} = **${Math.floor(Math.random() * 101)}%**!`);
+        const target = options.getUser('member');
+        return interaction.reply(`❤️ **Ship:** ${user.username} + ${target.username} = **${Math.floor(Math.random() * 101)}%**`);
+    }
+    if (commandName === 'chances') return interaction.reply(`📊 The chance of "${options.getString('question')}" is **${Math.floor(Math.random() * 101)}%**.`);
+    if (commandName === 'cow-level') {
+        const target = options.getUser('user') || user;
+        return interaction.reply(`🐂 ${target.username} is **${Math.floor(Math.random() * 101)}%** a simp.`);
+    }
+    if (commandName === 'iq') {
+        const target = options.getUser('user') || user;
+        return interaction.reply(`🧠 ${target.username}'s IQ is **${Math.floor(Math.random() * 200)}**.`);
+    }
+    if (commandName === 'dollar') return interaction.reply('💵 The dollar is expensive today. Go work!');
+    if (commandName === 'choose') {
+        const opt1 = options.getString('option1');
+        const opt2 = options.getString('option2');
+        return interaction.reply(`🤔 I choose: **${[opt1, opt2][Math.floor(Math.random() * 2)]}**`);
+    }
+    if (commandName === 'poll') {
+        const topic = options.getString('topic');
+        const msg = await interaction.reply({ content: `📊 **Poll:** ${topic}`, fetchReply: true });
+        await msg.react('👍'); await msg.react('👎');
     }
 
-    if (commandName === 'chances') {
-        const pergunta = options.getString('question');
-        return interaction.reply(`📊 The chance of: "${pergunta}" happening is **${Math.floor(Math.random() * 101)}%**.`);
-    }
-
-    if (commandName === 'cattle') {
-        const alvo = options.getUser('member') || interaction.user;
-        return interaction.reply(`🐂 ${alvo.username} is **${Math.floor(Math.random() * 101)}%** a cow.\nhttps://tenor.com/bNhJr.gif`);
-    }
-
-    if (commandName === 'qi') {
-        const alvo = options.getUser('member') || interaction.user;
-        return interaction.reply(`🧠 The IQ of ${alvo.username} is **${Math.floor(Math.random() * 200)}**. https://tenor.com/bPFuO.gif`);
-    }
-
-    if (commandName === 'dolar') {
-        return interaction.reply('💵 The dollar is high today. Go to work!');
-    }
-
-    if (commandName === 'escolha') {
-        const op1 = options.getString('option1');
-        const op2 = options.getString('option2');
-        const lista = [op1, op2];
-        return interaction.reply(`🤔 I choose with certainty: **${lista[Math.floor(Math.random() * lista.length)]}**`);
-    }
-
-    if (commandName === 'votar') {
-        const enquete = options.getString('theme');
-        const msg = await interaction.reply({ content: `📊 **POLL:** ${enquete}`, fetchReply: true });
-        await msg.react('👍');
-        await msg.react('👎');
-    }
-
-    // --- ECONOMIA ---
+    // ===================== ECONOMY =====================
     if (commandName === 'balance') {
-        iniciarConta(interaction.user.id);
-        return interaction.reply(`💰 You have **$${banco.get(interaction.user.id).carteira}** money in your wallet.`);
+        initBankAccount(user.id);
+        return interaction.reply(`💰 You have **$${bank.get(user.id).balance}**`);
     }
 
     if (commandName === 'daily') {
-        iniciarConta(interaction.user.id);
-        banco.get(interaction.user.id).carteira += 200;
-        return interaction.reply('📆 You claimed your **$200** daily money!');
+        initBankAccount(user.id);
+        bank.get(user.id).balance += 200;
+        return interaction.reply('📆 You received your daily **$200**!');
     }
 
     if (commandName === 'work') {
-        iniciarConta(interaction.user.id);
-        const ganho = Math.floor(Math.random() * 80) + 20;
-        banco.get(interaction.user.id).carteira += ganho;
-        return interaction.reply(`💼 You worked and earned **$${ganho}**.`);
+        initBankAccount(user.id);
+        const earnings = Math.floor(Math.random() * 80) + 20;
+        bank.get(user.id).balance += earnings;
+        return interaction.reply(`💼 You worked and earned **$${earnings}**!`);
     }
 
     if (commandName === 'bet') {
-        iniciarConta(interaction.user.id);
-        const conta = banco.get(interaction.user.id);
-        const valor = options.getInteger('value');
-        if (valor <= 0 || valor > conta.carteira) return interaction.reply('Place a valid bet amount (within your balance).');
-        
+        initBankAccount(user.id);
+        const account = bank.get(user.id);
+        const amount = options.getInteger('amount');
+        if (amount <= 0 || amount > account.balance) return interaction.reply('❌ Invalid bet amount.');
         if (Math.random() > 0.5) {
-            conta.carteira += valor;
-            return interaction.reply(`🎉 You won **$${valor}**!`);
+            account.balance += amount;
+            return interaction.reply(`🎉 You won **$${amount}**!`);
         } else {
-            conta.carteira -= valor;
-            return interaction.reply(`😭 You lost **$${valor}**.`);
+            account.balance -= amount;
+            return interaction.reply(`😭 You lost **$${amount}**.`);
         }
     }
 
     if (commandName === 'donate') {
-        iniciarConta(interaction.user.id);
-        const alvo = options.getUser('member');
-        const valor = options.getInteger('value');
-        if (valor <= 0) return interaction.reply('The amount must be greater than zero.');
-        iniciarConta(alvo.id);
-        
-        if (banco.get(interaction.user.id).carteira < valor) return interaction.reply('You don\'t have enough balance to donate.');
-        banco.get(interaction.user.id).carteira -= valor;
-        banco.get(alvo.id).carteira += valor;
-        return interaction.reply(`💸 You donated **$${valor}** to ${alvo}.`);
+        initBankAccount(user.id);
+        const target = options.getUser('member');
+        const amount = options.getInteger('amount');
+        if (amount <= 0) return interaction.reply('❌ Amount must be greater than 0.');
+        initBankAccount(target.id);
+        if (bank.get(user.id).balance < amount) return interaction.reply('❌ Insufficient balance.');
+        bank.get(user.id).balance -= amount;
+        bank.get(target.id).balance += amount;
+        return interaction.reply(`💸 You donated **$${amount}** to ${target.username}.`);
     }
 
-    // --- GAMES ---
-    if (commandName === 'jokenpo') {
-        const opcoes = ['rock', 'paper', 'scissors'];
-        const escolhaBot = opcoes[Math.floor(Math.random() * 3)];
-        const escolhaUser = options.getString('jogada');
-        
-        if (escolhaUser === escolhaBot) return interaction.reply(`Tie! Both chose **${escolhaBot}**.`);
-        else if ((escolhaUser === 'rock' && escolhaBot === 'scissors') || (escolhaUser === 'paper' && escolhaBot === 'rock') || (escolhaUser === 'scissors' && escolhaBot === 'paper')) {
-            return interaction.reply(`You won! I chose **${escolhaBot}**.`);
-        } else {
-            return interaction.reply(`You lost! I chose **${escolhaBot}**.`);
+    // ===================== MINI GAMES =====================
+    if (commandName === 'rock-paper-scissors') {
+        const userChoice = options.getString('choice');
+        const botChoices = ['rock', 'paper', 'scissors'];
+        const botChoice = botChoices[Math.floor(Math.random() * 3)];
+        if (userChoice === botChoice) return interaction.reply(`🤝 Tie! Both chose **${botChoice}**.`);
+        if ((userChoice === 'rock' && botChoice === 'scissors') || 
+            (userChoice === 'paper' && botChoice === 'rock') || 
+            (userChoice === 'scissors' && botChoice === 'paper')) {
+            return interaction.reply(`🎉 You won! I chose **${botChoice}**.`);
         }
+        return interaction.reply(`😔 You lost! I chose **${botChoice}**.`);
     }
 
-    if (commandName === 'adivinhe') {
-        const segredo = Math.floor(Math.random() * 10) + 1;
-        const palpite = options.getInteger('numero');
-        if (palpite === segredo) return interaction.reply('🎯 You got it right!');
-        return interaction.reply(`You missed! The number was **${segredo}**.`);
+    if (commandName === 'guess') {
+        const secret = Math.floor(Math.random() * 10) + 1;
+        const guess = options.getInteger('number');
+        return interaction.reply(guess === secret ? '🎯 Correct!' : `❌ Wrong! The number was **${secret}**.`);
     }
 
-    if (commandName === 'fps') {
-        return interaction.reply(`🎮 Running at **${Math.floor(Math.random() * 60) + 180} FPS**.`);
-    }
+    if (commandName === 'fps') return interaction.reply(`🎮 Your mood is running at **${Math.floor(Math.random() * 60) + 180} FPS**.`);
+    if (commandName === 'hack') return interaction.reply(`💻 Hacking ${options.getUser('member').username}... Password found: \`password123\``);
+    if (commandName === 'russian-roulette') return interaction.reply(Math.random() < 0.16 ? '💥 You died!' : '🏳️ You survived!');
+    if (commandName === 'punch') return interaction.reply(`🥊 ${user} punched ${options.getUser('member')}!`);
+    if (commandName === 'bite') return interaction.reply(`😬 ${user} bit ${options.getUser('member')}!`);
+    if (commandName === 'kill') return interaction.reply(`💀 ${user} eliminated ${options.getUser('member')}!`);
+    if (commandName === 'run') return interaction.reply('🏃💨 You ran away!');
 
-    if (commandName === 'hackear') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`💻 Injetando vírus em ${alvo.username}... Senha do e-mail decodificada: \`batatinha123\``);
-    }
-
-    if (commandName === 'roleta') {
-        if (Math.random() < 0.16) return interaction.reply('💥 MORREU!');
-        return interaction.reply('🏳️ O tambor girou e a arma falhou. Sobreviveu!');
-    }
-
-    if (commandName === 'soco') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`🥊 ${interaction.user} meteu um soco em ${alvo}!\nhttps://tenor.com/jItzcdDTiss.gif`);
-    }
-
-    if (commandName === 'morder') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`😬 ${interaction.user} deu uma mordida em ${alvo}!\nhttps://tenor.com/bXuSq.gif`);
-    }
-
-    if (commandName === 'matar') {
-        const alvo = options.getUser('member');
-        return interaction.reply(`💀 ${interaction.user} molestou ${alvo}!\nhttps://tenor.com/vuJlRyJ0Zpu.gif`);
-    }
-
-    if (commandName === 'correr') {
-        return interaction.reply('🏃💨 Você saiu correndo!');
-    }
-
-    // --- AJUDA ---
-    if (commandName === 'ajuda') {
+    // ===================== HELP =====================
+    if (commandName === 'help') {
         const embed = new EmbedBuilder()
-            .setColor(#000000)
-            .setTitle('🔥 ARKILL - COMMANDS')
-            .setDescription('administration bot (test)')
+            .setColor(0x000000)
+            .setTitle('🔥 Bot Commands List')
+            .setDescription('Full featured Discord bot with moderation and fun commands')
             .addFields(
-                { name: '⚙️ Configurações (Apenas Admins)', value: '`/config-boasvindas` \`/config-mensagem\` \`/config-cargo\`' },
-                { name: '🛡️ Moderação Básica & Avançada', value: '`/limpar` `/expulsar` `/banir` `/lock` `/unlock` `/modolento` `/warn` `/setnick`' },
-                { name: '📊 Utilidades', value: '`/ping` `/serverinfo` `/avatar` `/userinfo` `/uptime` `/falar` `/sorteio` `/convite` `/calculadora` `/regras` `/links`' },
-                { name: '😂 Diversão & Interação', value: '`/meme` `/dado` `/moeda` `/biscoito` `/8ball` `/abracar` `/beijar` `/tapa` `/cantada`(`/piada`)(`/atacar`)(`/elogiar`)(`/reverso`)(`/ship`)(`/chances`)(`/gado`)(`/qi`)(`/dolar`)(`/escolha`)(`/diga`)(`/votar`)' },
-                { name: '💰 Economia', value: '`/saldo` `/daily` `/trabalhar` `/apostar` `/doar`' },
-                { name: '🎮 Mini Games & Ações', value: '`/jokenpo` `/adivinhe` `/fps` `/hackear` `/roleta` `/soco` }}/morder`}(`/matar`)(`/correr`)' }
+                { name: '⚙️ Configuration', value: '`/welcome-config` `/message-config` `/role-config`', inline: false },
+                { name: '🛡️ Moderation', value: '`/clear` `/kick` `/ban` `/lock` `/unlock` `/slow-mode` `/warn` `/set-nick`', inline: false },
+                { name: '📊 Utilities', value: '`/ping` `/server-info` `/avatar` `/user-info` `/uptime` `/say` `/giveaway` `/invite` `/calculator`', inline: false },
+                { name: '😂 Fun & Social', value: '`/meme` `/roll` `/coin-flip` `/fortune-cookie` `/8ball` `/hug` `/kiss` `/slap` `/pickup-line` `/joke` `/attack` `/compliment` `/reverse` `/ship` `/chances` `/cow-level` `/iq` `/choose` `/poll`', inline: false },
+                { name: '💰 Economy', value: '`/balance` `/daily` `/work` `/bet` `/donate`', inline: false },
+                { name: '🎮 Mini Games', value: '`/rock-paper-scissors` `/guess` `/fps` `/hack` `/russian-roulette` `/punch` `/bite` `/kill` `/run`', inline: false }
             );
         return interaction.reply({ embeds: [embed] });
     }
@@ -878,15 +480,9 @@ client.on('interactionCreate', async (interaction) => {
 
 client.login(process.env.TOKEN);
 
-// ==================== SERVIDOR PARA RENDER ====================
+// ==================== KEEP ALIVE ====================
 const express = require('express');
 const app = express();
-
-app.get('/', (req, res) => {
-    res.send('ARKILL está online!🔥');
-});
-
+app.get('/', (req, res) => res.send('Bot is online! 🔥'));
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🌐 Servidor de Keep-Alive rodando na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🌐 Keep-alive server running on port ${PORT}`));
