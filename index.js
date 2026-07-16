@@ -321,7 +321,7 @@ client.on('interactionCreate', async (interaction) => {
 
     // ===================== FUN COMMANDS =====================
     if (commandName === 'meme') {
-        const memes = ["Why do programmers prefer dark mode? Because light attracts bugs.", "The code works... I don't know why. Don't touch it.","https://tenor.com/tN24QWBRpuW.gif","https://tenor.com/bXdTS.gif",<div class="tenor-gif-embed" data-postid="11375078409552454630" data-share-method="host" data-aspect-ratio="1" data-width="100%"><a href="https://tenor.com/view/ultrakill-gabriel-ultrakill-ultrakill-gabriel-gif-11375078409552454630">Ultrakill Gabriel Ultrakill GIF</a>from <a href="https://tenor.com/search/ultrakill-gifs">Ultrakill GIFs</a></div> <script type="text/javascript" async src="https://tenor.com/embed.js"></script>];
+        const memes = ["Why do programmers prefer dark mode? Because light attracts bugs.", "The code works... I don't know why. Don't touch it.","https://tenor.com/tN24QWBRpuW.gif","https://tenor.com/bXdTS.gif"];
         return interaction.reply(memes[Math.floor(Math.random() * memes.length)]);
     }
 
