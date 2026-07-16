@@ -410,7 +410,7 @@ client.on('guildMemberAdd', async (member) => {
     if (serverConfig.canalId) {
         const canal = member.guild.channels.cache.get(serverConfig.canalId);
         if (canal) {
-            let textoCustomizado = serverConfig.mensagem || "Seja bem-vindo(a) ao nosso servidor!";
+            let textoCustomizado = serverConfig.mensagem || "Welcome {membro} to {servidor}! Now we are {total} members!";
             textoCustomizado = textoCustomizado
                 .replace(/{membro}/g, `${member}`)
                 .replace(/{servidor}/g, `${member.guild.name}`)
@@ -455,31 +455,31 @@ client.on('interactionCreate', async (interaction) => {
     const dadosServidor = configBoasVindas.get(guild.id);
 
     // --- CONFIGURAÇÕES DE BOAS-VINDAS ---
-    if (commandName === 'config-boasvindas') {
+    if (commandName === 'welcome-config') {
         if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return interaction.reply({ content: '❌ Apenas administradores podem configurar o sistema de boas-vindas.', ephemeral: true });
+            return interaction.reply({ content: '❌ Only administrators can configure the welcome system.', ephemeral: true });
         }
-        const canal = options.getChannel('canal');
+        const canal = options.getChannel('channel');
         dadosServidor.canalId = canal.id;
-        return interaction.reply({ content: `✅ Canal de boas-vindas definido com sucesso para: ${canal}!`, ephemeral: true });
+        return interaction.reply({ content: `✅ Welcome channel successfully set to: ${canal}!`, ephemeral: true });
     }
 
-    if (commandName === 'config-mensagem') {
+    if (commandName === 'message-config') {
         if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return interaction.reply({ content: '❌ Apenas administradores podem usar este comando.', ephemeral: true });
+            return interaction.reply({ content: '❌ Only administrators can configure the welcome message.', ephemeral: true });
         }
-        const msgCustom = options.getString('mensagem');
+        const msgCustom = options.getString('message');
         dadosServidor.mensagem = msgCustom;
-        return interaction.reply({ content: '✅ Mensagem de boas-vindas atualizada com sucesso!', ephemeral: true });
+        return interaction.reply({ content: '✅ Welcome message successfully updated!', ephemeral: true });
     }
 
     if (commandName === 'config-cargo') {
         if (!member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-            return interaction.reply({ content: '❌ Apenas administradores podem usar este comando.', ephemeral: true });
+            return interaction.reply({ content: '❌ Only administrators can configure the welcome role.', ephemeral: true });
         }
         const cargo = options.getRole('cargo');
         dadosServidor.cargoId = cargo.id;
-        return interaction.reply({ content: `✅ Cargo automático definido para: **${cargo.name}**`, ephemeral: true });
+        return interaction.reply({ content: `✅ Automatic role set to: **${cargo.name}**`, ephemeral: true });
     }
 
     // --- UTILS & MODERAÇÃO ---
@@ -487,55 +487,55 @@ client.on('interactionCreate', async (interaction) => {
         return interaction.reply(`🏓 Pong! ${Date.now() - interaction.createdTimestamp}ms`);
     }
 
-    if (commandName === 'limpar') {
+    if (commandName === 'Clear') {
         if (!member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
-            return interaction.reply({ content: '❌ Você não tem permissão pra isso, parça.', ephemeral: true });
+            return interaction.reply({ content: '❌ You don\'t have permission to do that, bro.', ephemeral: true });
         }
-        const qtd = options.getInteger('quantidade');
-        if (qtd < 1 || qtd > 99) {
-            return interaction.reply({ content: 'Use um número entre 1 e 99.', ephemeral: true });
+        const qtd = options.getInteger('amount');
+        if (qtd < 1 || qtd > 100) {
+            return interaction.reply({ content: '❌ Use a number between 1 and 100.', ephemeral: true });
         }
         
         await interaction.deferReply({ ephemeral: true });
         await channel.bulkDelete(qtd, true);
-        await interaction.editReply(`🧹 Limpei ${qtd} mensagens, denada!`);
+        await interaction.editReply(`🧹 I cleared ${qtd} messages, buddy!`);
     }
 
-    if (commandName === 'expulsar') {
+    if (commandName === 'kick') {
         if (!member.permissions.has(PermissionsBitField.Flags.KickMembers)) {
-            return interaction.reply({ content: '❌ Sem permissão de expulsar membros.', ephemeral: true });
+            return interaction.reply({ content: '❌ You don\'t have permission to kick members.', ephemeral: true });
         }
-        const user = options.getUser('membro');
-        const motivo = options.getString('motivo') || 'Sem motivo especificado';
+        const user = options.getUser('member');
+        const motivo = options.getString('motivo') || 'No reason specified';
         const guildMember = await guild.members.fetch(user.id).catch(() => null);
         
-        if (!guildMember) return interaction.reply({ content: 'Membro não encontrado neste servidor.', ephemeral: true });
+        if (!guildMember) return interaction.reply({ content: 'Member not found in this server.', ephemeral: true });
         
         await guildMember.kick(motivo);
-        return interaction.reply(`🚪 **${user.tag}** foi expulso. Motivo: ${motivo}`);
+        return interaction.reply(`🚪 **${user.tag}** was kicked. Reason: ${motivo}`);
     }
 
-    if (commandName === 'banir') {
+    if (commandName === 'ban') {
         if (!member.permissions.has(PermissionsBitField.Flags.BanMembers)) {
-            return interaction.reply({ content: '❌ Sem permissão de banir membros.', ephemeral: true });
+            return interaction.reply({ content: '❌ You don\'t have permission to ban members.', ephemeral: true });
         }
-        const user = options.getUser('membro');
-        const motivo = options.getString('motivo') || 'Quebrou as regras';
+        const user = options.getUser('member');
+        const motivo = options.getString('reason') || 'Violated server rules';
         const guildMember = await guild.members.fetch(user.id).catch(() => null);
 
-        if (!guildMember) return interaction.reply({ content: 'Membro não encontrado neste servidor.', ephemeral: true });
+        if (!guildMember) return interaction.reply({ content: 'Member not found in this server.', ephemeral: true });
 
         await guildMember.ban({ reason: motivo });
-        return interaction.reply(`🔨 **${user.tag}** foi banido. Motivo: ${motivo}`);
+        return interaction.reply(`🔨 **${user.tag}** was banned. Reason: ${motivo}`);
     }
 
     if (commandName === 'meme') {
         const memes = [
             "https://klipy.com/gifs/shrek-rizz-shrek-meme",
-            "Por que o programador faliu? Porque ele usava muito 'break'!",
-            "Tudo na vida passa, menos a minha vontade de comer pizza.",
-            "O código funciona, mas eu não sei o porquê. Não mexa.",
-            "Eu tentando fingir que entendi o que a pessoa falou após ela repetir 3 vezes."
+            "Why did the programmer fail? Because he used too many 'break' statements!",
+            "Everything in life passes, except my desire to eat pizza.",
+            "The code works, but I don't know why. Don't touch it.",
+            "I'm trying to pretend I understood what the person said after they repeated it 3 times."
         ];
         const random = memes[Math.floor(Math.random() * memes.length)];
         return interaction.reply(random);
@@ -543,67 +543,67 @@ client.on('interactionCreate', async (interaction) => {
 
     if (commandName === 'lock') {
         if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-            return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
+            return interaction.reply({ content: '❌ You don\'t have permission.', ephemeral: true });
         }
         await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: false });
-        return interaction.reply('🔒 Canal trancado! Silêncio no tribunal.');
+        return interaction.reply('🔒 Channel locked! Silence in the courtroom.');
     }
 
     if (commandName === 'unlock') {
         if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-            return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
+            return interaction.reply({ content: '❌ You don\'t have permission.', ephemeral: true });
         }
         await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: null });
-        return interaction.reply('🔓 Canal destrancado. Podem falar agora.');
+        return interaction.reply('🔓 Channel unlocked. You can talk now.');
     }
 
-    if (commandName === 'modolento') {
+    if (commandName === 'Slow-mode') {
         if (!member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
-            return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
+            return interaction.reply({ content: '❌ You don\'t have permission.', ephemeral: true });
         }
-        const tempo = options.getInteger('segundos');
+        const tempo = options.getInteger('seconds');
         await channel.setRateLimitPerUser(tempo);
-        return interaction.reply(`⏳ Modo lento definido para ${tempo} segundos.`);
+        return interaction.reply(`⏳ Slow mode defined for ${tempo} seconds.`);
     }
 
     if (commandName === 'warn') {
-        const user = options.getUser('membro');
-        const motivo = options.getString('motivo') || 'Comportamento estranho';
-        return interaction.reply(`⚠️ **AVISO:** ${user} foi avisado por: *${motivo}*. Fica esperto!`);
+        const user = options.getUser('member');
+        const motivo = options.getString('reason') || 'Unusual behavior';
+        return interaction.reply(`⚠️ **WARNING:** ${user} was warned for: *${motivo}*. Stay alert!`);
     }
 
     if (commandName === 'setnick') {
         if (!member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) {
-            return interaction.reply({ content: '❌ Sem permissão.', ephemeral: true });
+            return interaction.reply({ content: '❌ You don\'t have permission.', ephemeral: true });
         }
-        const user = options.getUser('membro');
-        const novoNick = options.getString('apelido');
+        const user = options.getUser('member');
+        const novoNick = options.getString('nickname');
         const targetMember = await guild.members.fetch(user.id).catch(() => null);
 
-        if (!targetMember) return interaction.reply({ content: 'Membro inválido.', ephemeral: true });
+        if (!targetMember) return interaction.reply({ content: '❌ Invalid member.', ephemeral: true });
         await targetMember.setNickname(novoNick);
-        return interaction.reply(`📝 Nome de ${user.username} alterado para ${novoNick}.`);
+        return interaction.reply(`📝 Name of ${user.username} changed to ${novoNick}.`);
     }
 
     if (commandName === 'serverinfo') {
         const embed = new EmbedBuilder()
             .setColor(0x00FF00)
-            .setTitle(`📊 Informações de ${guild.name}`)
+            .setTitle(`📊 Information about ${guild.name}`)
             .addFields(
-                { name: 'Membros', value: `${guild.memberCount}`, inline: true },
-                { name: 'Criado em', value: `${guild.createdAt.toLocaleDateString('pt-BR')}`, inline: true }
+                { name: 'Members', value: `${guild.memberCount}`, inline: true },
+                { name: 'Created at', value: `${guild.createdAt.toLocaleDateString('pt-BR')}`, inline: true }
             );
         return interaction.reply({ embeds: [embed] });
     }
 
     if (commandName === 'avatar') {
-        const usuario = options.getUser('usuario') || interaction.user;
-        return interaction.reply(`🖼️ Avatar de ${usuario.username}: ${usuario.displayAvatarURL({ forceStatic: false, size: 1024 })}`);
+        const usuario = options.getUser('user') || interaction.user;
+        return interaction.reply(`🖼️ Avatar of ${usuario.username}: ${usuario.displayAvatarURL({ forceStatic: false, size: 1024 })}`);
     }
 
     if (commandName === 'userinfo') {
-        const usuario = options.getUser('usuario') || interaction.user;
-        return interaction.reply(`👤 **Nome:** ${usuario.tag}\n🆔 **ID:** ${usuario.id}\n📅 **Conta criada em:** ${usuario.createdAt.toLocaleDateString('pt-BR')}`);
+        const usuario = options.getUser('user') || interaction.user;
+        return interaction.reply(`👤 **Name:** ${usuario.tag}\n🆔 **ID:** ${usuario.id}\n📅 **Account created on:** ${usuario.createdAt.toLocaleDateString('pt-BR')}`);
     }
 
     if (commandName === 'uptime') {
@@ -614,227 +614,223 @@ client.on('interactionCreate', async (interaction) => {
         totalSeconds %= 3600;
         let minutes = Math.floor(totalSeconds / 60);
         let seconds = Math.floor(totalSeconds % 60);
-        return interaction.reply(`⏰ Estou online faz: \`${days}d ${hours}h ${minutes}m ${seconds}s\``);
+        return interaction.reply(`⏰ I've been online for: \`${days}d ${hours}h ${minutes}m ${seconds}s\``);
     }
 
-    if (commandName === 'falar') {
-        const fala = options.getString('mensagem');
-        await interaction.reply({ content: 'Enviando...', ephemeral: true });
+    if (commandName === 'say') {
+        const fala = options.getString('message');
+        await interaction.reply({ content: 'Sending...', ephemeral: true });
         return channel.send(fala);
     }
 
-    if (commandName === 'sorteio') {
-        const premio = options.getString('premio');
+    if (commandName === 'draw') {
+        const premio = options.getString('prize');
         const totalMembers = await guild.members.fetch();
         const ganhador = totalMembers.filter(m => !m.user.bot).random();
-        if (!ganhador) return interaction.reply('Não há membros suficientes para sortear.');
-        return interaction.reply(`🎉 **SORTEIO!** Prêmio: **${premio}**\n🏆 Ganhador(a): ${ganhador}! Parabéns!`);
+        if (!ganhador) return interaction.reply('There aren´t enough members to hold a draw..');
+        return interaction.reply(`🎉 **DRAW!** Prize: **${premio}**\n🏆 Winner: ${ganhador}! Congratulations!`);
     }
 
-    if (commandName === 'convite') {
-        return interaction.reply('🔗 Quer me adicionar no seu servidor? Use: https://discord.com/api/oauth2/authorize?client_id=' + client.user.id + '&permissions=8&scope=bot%20applications.commands');
+    if (commandName === 'invite') {
+        return interaction.reply('🔗 Do you want to add me to your server? Use: https://discord.com/api/oauth2/authorize?client_id=' + client.user.id + '&permissions=8&scope=bot%20applications.commands');
     }
 
-    if (commandName === 'calculadora') {
+    if (commandName === 'calculator') {
         const n1 = options.getNumber('n1');
-        const op = options.getString('operacao');
+        const op = options.getString('operation');
         const n2 = options.getNumber('n2');
         let res = 0;
         if (op === '+') res = n1 + n2;
         else if (op === '-') res = n1 - n2;
         else if (op === '*') res = n1 * n2;
         else if (op === '/') res = n1 / n2;
-        return interaction.reply(`🔢 Resultado: **${res}**`);
+        return interaction.reply(`🔢 Result: **${res}**`);
     }
 
-    if (commandName === 'regras') {
-        return interaction.reply('📜 **Regras do Servidor:**\n1. Não seja chato.\n2. Não floode.\n3. Respeite todo mundo.');
+    if (commandName === 'rules') {
+        return interaction.reply('📜 **Server Rules:**\n1. Don\'t be boring.\n2. Don\'t flood.\n3. Respect everyone.');
     }
 
     if (commandName === 'links') {
-        return interaction.reply('🌐 **Nossos links:**\nSite: Em breve\nTwitter: Em breve');
+        return interaction.reply('🌐 **Our links:**\nSite: Coming soon\nTwitter: Coming soon');
     }
 
     // --- MINI GAMES & DIVERSÃO ---
-    if (commandName === 'dado') {
-        const faces = options.getInteger('lados') || 6;
+    if (commandName === 'yatzy') {
+        const faces = options.getInteger('sides') || 6;
         const result = Math.floor(Math.random() * faces) + 1;
-        return interaction.reply(`🎲 Você rolou um dado de ${faces} lados e tirou: **${result}**`);
+        return interaction.reply(`🎲 You rolled a ${faces}-sided die and got: **${result}**`);
     }
 
-    if (commandName === 'moeda') {
-        const lados = ['Cara', 'Coroa'];
-        const escolhido = lados[Math.floor(Math.random() * lados.length)];
-        return interaction.reply(`🪙 Caiu... **${escolhido}**!`);
+    if (commandName === 'coin') {
+        const sides = ['Heads', 'Tails'];
+        const chosen = sides[Math.floor(Math.random() * sides.length)];
+        return interaction.reply(`🪙 It landed on... **${chosen}**!`);
     }
 
-    if (commandName === 'biscoito') {
-        const frases = ["Você terá um dia incrível hoje!", "A recompensa pelo bom trabalho é mais trabalho.", "Amanhã você vai acordar mais rico (ou não)."];
-        return interaction.reply(`🥠 **Biscoito da Sorte:** ${frases[Math.floor(Math.random() * frases.length)]}`);
+    if (commandName === 'cookie') {
+        const frases = ["You will have an incredible day today!", "The reward for good work is more work.", "Tomorrow you will wake up richer (or not)."];
+        return interaction.reply(`🥠 **Lucky Cookie:** ${frases[Math.floor(Math.random() * frases.length)]}`);
     }
 
     if (commandName === '8ball') {
-        const respostas = ['Sim!', 'Com certeza', 'Talvez', 'Não', 'Definitivamente não.'];
-        const pergunta = options.getString('pergunta');
-        return interaction.reply(`🔮 **Pergunta:** *${pergunta}*\n**Resposta:** ${respostas[Math.floor(Math.random() * respostas.length)]}`);
+        const respostas = ['yes!!', 'Certainly', 'Maybe', 'NNo', 'Definitely not.'];
+        const pergunta = options.getString('question');
+        return interaction.reply(`🔮 **Question:** *${pergunta}*\n**Answer:** ${respostas[Math.floor(Math.random() * respostas.length)]}`);
     }
 
-    if (commandName === 'abracar') {
-        const alvo = options.getUser('membro');
-        return interaction.reply(`🤗 ${interaction.user} deu um abraço apertado em ${alvo}! https://tenor.com/bFfSZLNFIus.gif`);
+    if (commandName === 'hug') {
+        const alvo = options.getUser('member');
+        return interaction.reply(`🤗 ${interaction.user} gave a tight hug to ${alvo}!`);
     }
 
-    if (commandName === 'beijar') {
-        const alvo = options.getUser('membro');
-        return interaction.reply(`💋 ${interaction.user} deu um beijo guloso em ${alvo}! https://tenor.com/bioe7.gif`);
+    if (commandName === 'kiss') {
+        const alvo = options.getUser('member');
+        return interaction.reply(`💋 ${interaction.user} gave a passionate kiss to ${alvo}!`);
     }
 
-    if (commandName === 'tapa') {
-        const alvo = options.getUser('membro');
-        return interaction.reply(`💥 Ouuuch! ${interaction.user} deu um tapa estalado em ${alvo}! https://tenor.com/bHBn8.gif`);
+    if (commandName === 'slap') {
+        const alvo = options.getUser('member');
+        return interaction.reply(`💥 Ouuuch! ${interaction.user} gave a hard slap to ${alvo}! `);
     }
 
-    if (commandName === 'cantada') {
-        const cantadas = ["Você não é Wi-Fi, mas sinto uma forte conexão.", "Me chama de tabela periódica e diz que rola uma química entre nós."];
+    if (commandName === 'pickup line') {
+        const cantadas = ["You are not Wi-Fi, but I feel a strong connection.", "Call me periodic table and say there's chemistry between us."];
         return interaction.reply(`😏 ${cantadas[Math.floor(Math.random() * cantadas.length)]}`);
     }
 
-    if (commandName === 'piada') {
-        const piadas = ["Por que o jacaré tirou o jacarezinho da escola? Porque ele ré-ptil de ano.", "O que o tomate foi fazer no banco? Tirar o extrato."];
+    if (commandName === 'joke') {
+        const piadas = ["Why did the alligator take the little alligator out of school? Because he was a reptile who got held back a year.", "What did the tomato do at the bank? It took out a loan."];
         return interaction.reply(`🤡 ${piadas[Math.floor(Math.random() * piadas.length)]}`);
     }
 
-    if (commandName === 'atacar') {
-        const alvo = options.getUser('membro');
-        return interaction.reply(`⚔️ ${interaction.user} atacou gulosamente ${alvo} e causou **${Math.floor(Math.random() * 100)}** de danos gulosos!`);
+    if (commandName === 'attack') {
+        const alvo = options.getUser('member');
+        return interaction.reply(`⚔️ ${interaction.user} attacked ${alvo} and caused **${Math.floor(Math.random() * 100)}** damage!`);
     }
 
-    if (commandName === 'elogiar') {
-        const alvo = options.getUser('membro');
-        return interaction.reply(`✨ ${alvo}, ${interaction.user} te disse: voce é muito bonita/bonito! https://tenor.com/dhryROG66Uz.gif`);
+    if (commandName === 'compliment') {
+        const alvo = options.getUser('member');
+        return interaction.reply(`✨ ${alvo}, ${interaction.user} told you: "You're amazing and deserve all the success in the world!"`);
     }
 
-    if (commandName === 'reverso') {
-        const texto = options.getString('texto');
+    if (commandName === 'reverse') {
+        const texto = options.getString('text');
         return interaction.reply(texto.split('').reverse().join(''));
     }
 
     if (commandName === 'ship') {
-        const user2 = options.getUser('membro');
+        const user2 = options.getUser('member');
         return interaction.reply(`❤️ **SHIP:** ${interaction.user.username} + ${user2.username} = **${Math.floor(Math.random() * 101)}%**!`);
     }
 
     if (commandName === 'chances') {
-        const pergunta = options.getString('pergunta');
-        return interaction.reply(`📊 A chance de: "${pergunta}" acontecer é de **${Math.floor(Math.random() * 101)}%**.`);
+        const pergunta = options.getString('question');
+        return interaction.reply(`📊 The chance of: "${pergunta}" happening is **${Math.floor(Math.random() * 101)}%**.`);
     }
 
-    if (commandName === 'gado') {
-        const alvo = options.getUser('usuario') || interaction.user;
-        return interaction.reply(`🐂 ${alvo.username} é **${Math.floor(Math.random() * 101)}%** gado.\nhttps://tenor.com/bNhJr.gif`);
+    if (commandName === 'cattle') {
+        const alvo = options.getUser('member') || interaction.user;
+        return interaction.reply(`🐂 ${alvo.username} is **${Math.floor(Math.random() * 101)}%** a cow.\nhttps://tenor.com/bNhJr.gif`);
     }
 
     if (commandName === 'qi') {
-        const alvo = options.getUser('usuario') || interaction.user;
-        return interaction.reply(`🧠 O QI de ${alvo.username} é de **${Math.floor(Math.random() * 200)}**. https://tenor.com/bPFuO.gif`);
+        const alvo = options.getUser('member') || interaction.user;
+        return interaction.reply(`🧠 The IQ of ${alvo.username} is **${Math.floor(Math.random() * 200)}**. https://tenor.com/bPFuO.gif`);
     }
 
     if (commandName === 'dolar') {
-        return interaction.reply('💵 O dólar hoje está alto. Vá trabalhar!');
+        return interaction.reply('💵 The dollar is high today. Go to work!');
     }
 
     if (commandName === 'escolha') {
-        const op1 = options.getString('opcao1');
-        const op2 = options.getString('opcao2');
+        const op1 = options.getString('option1');
+        const op2 = options.getString('option2');
         const lista = [op1, op2];
-        return interaction.reply(`🤔 Eu escolho com certeza: **${lista[Math.floor(Math.random() * lista.length)]}**`);
-    }
-
-    if (commandName === 'diga') {
-        return interaction.reply('Opa! Use os comandos de barra `/` para ver o que sei fazer.');
+        return interaction.reply(`🤔 I choose with certainty: **${lista[Math.floor(Math.random() * lista.length)]}**`);
     }
 
     if (commandName === 'votar') {
-        const enquete = options.getString('tema');
-        const msg = await interaction.reply({ content: `📊 **VOTAÇÃO:** ${enquete}`, fetchReply: true });
+        const enquete = options.getString('theme');
+        const msg = await interaction.reply({ content: `📊 **POLL:** ${enquete}`, fetchReply: true });
         await msg.react('👍');
         await msg.react('👎');
     }
 
     // --- ECONOMIA ---
-    if (commandName === 'saldo') {
+    if (commandName === 'balance') {
         iniciarConta(interaction.user.id);
-        return interaction.reply(`💰 Você tem **$${banco.get(interaction.user.id).carteira}** dinheiros na carteira.`);
+        return interaction.reply(`💰 You have **$${banco.get(interaction.user.id).carteira}** money in your wallet.`);
     }
 
     if (commandName === 'daily') {
         iniciarConta(interaction.user.id);
         banco.get(interaction.user.id).carteira += 200;
-        return interaction.reply('📆 Você resgatou seus **$200** dinheiros diários!');
+        return interaction.reply('📆 You claimed your **$200** daily money!');
     }
 
-    if (commandName === 'trabalhar') {
+    if (commandName === 'work') {
         iniciarConta(interaction.user.id);
         const ganho = Math.floor(Math.random() * 80) + 20;
         banco.get(interaction.user.id).carteira += ganho;
-        return interaction.reply(`💼 Você trabalhou e ganhou **$${ganho}**.`);
+        return interaction.reply(`💼 You worked and earned **$${ganho}**.`);
     }
 
-    if (commandName === 'apostar') {
+    if (commandName === 'bet') {
         iniciarConta(interaction.user.id);
         const conta = banco.get(interaction.user.id);
-        const valor = options.getInteger('valor');
-        if (valor <= 0 || valor > conta.carteira) return interaction.reply('Coloque um valor de aposta válido (dentro do seu saldo).');
+        const valor = options.getInteger('value');
+        if (valor <= 0 || valor > conta.carteira) return interaction.reply('Place a valid bet amount (within your balance).');
         
         if (Math.random() > 0.5) {
             conta.carteira += valor;
-            return interaction.reply(`🎉 Ganhou **$${valor}**!`);
+            return interaction.reply(`🎉 You won **$${valor}**!`);
         } else {
             conta.carteira -= valor;
-            return interaction.reply(`😭 Perdeu **$${valor}**.`);
+            return interaction.reply(`😭 You lost **$${valor}**.`);
         }
     }
 
-    if (commandName === 'doar') {
+    if (commandName === 'donate') {
         iniciarConta(interaction.user.id);
-        const alvo = options.getUser('membro');
-        const valor = options.getInteger('valor');
-        if (valor <= 0) return interaction.reply('O valor precisa ser maior que zero.');
+        const alvo = options.getUser('member');
+        const valor = options.getInteger('value');
+        if (valor <= 0) return interaction.reply('The amount must be greater than zero.');
         iniciarConta(alvo.id);
         
-        if (banco.get(interaction.user.id).carteira < valor) return interaction.reply('Você não tem saldo suficiente para doar.');
+        if (banco.get(interaction.user.id).carteira < valor) return interaction.reply('You don\'t have enough balance to donate.');
         banco.get(interaction.user.id).carteira -= valor;
         banco.get(alvo.id).carteira += valor;
-        return interaction.reply(`💸 Você doou **$${valor}** para ${alvo}.`);
+        return interaction.reply(`💸 You donated **$${valor}** to ${alvo}.`);
     }
 
     // --- GAMES ---
     if (commandName === 'jokenpo') {
-        const opcoes = ['pedra', 'papel', 'tesoura'];
+        const opcoes = ['rock', 'paper', 'scissors'];
         const escolhaBot = opcoes[Math.floor(Math.random() * 3)];
         const escolhaUser = options.getString('jogada');
         
-        if (escolhaUser === escolhaBot) return interaction.reply(`Empate! Ambos escolheram **${escolhaBot}**.`);
-        else if ((escolhaUser === 'pedra' && escolhaBot === 'tesoura') || (escolhaUser === 'papel' && escolhaBot === 'pedra') || (escolhaUser === 'tesoura' && escolhaBot === 'papel')) {
-            return interaction.reply(`Você ganhou! Eu escolhi **${escolhaBot}**.`);
+        if (escolhaUser === escolhaBot) return interaction.reply(`Tie! Both chose **${escolhaBot}**.`);
+        else if ((escolhaUser === 'rock' && escolhaBot === 'scissors') || (escolhaUser === 'paper' && escolhaBot === 'rock') || (escolhaUser === 'scissors' && escolhaBot === 'paper')) {
+            return interaction.reply(`You won! I chose **${escolhaBot}**.`);
         } else {
-            return interaction.reply(`Perdeu! Eu escolhi **${escolhaBot}**.`);
+            return interaction.reply(`You lost! I chose **${escolhaBot}**.`);
         }
     }
 
     if (commandName === 'adivinhe') {
         const segredo = Math.floor(Math.random() * 10) + 1;
         const palpite = options.getInteger('numero');
-        if (palpite === segredo) return interaction.reply('🎯 Acertou em cheio!');
-        return interaction.reply(`Errou! O número era **${segredo}**.`);
+        if (palpite === segredo) return interaction.reply('🎯 You got it right!');
+        return interaction.reply(`You missed! The number was **${segredo}**.`);
     }
 
     if (commandName === 'fps') {
-        return interaction.reply(`🎮 Rodando a **${Math.floor(Math.random() * 60) + 180} FPS**.`);
+        return interaction.reply(`🎮 Running at **${Math.floor(Math.random() * 60) + 180} FPS**.`);
     }
 
     if (commandName === 'hackear') {
-        const alvo = options.getUser('membro');
+        const alvo = options.getUser('member');
         return interaction.reply(`💻 Injetando vírus em ${alvo.username}... Senha do e-mail decodificada: \`batatinha123\``);
     }
 
@@ -844,17 +840,17 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     if (commandName === 'soco') {
-        const alvo = options.getUser('membro');
+        const alvo = options.getUser('member');
         return interaction.reply(`🥊 ${interaction.user} meteu um soco em ${alvo}!\nhttps://tenor.com/jItzcdDTiss.gif`);
     }
 
     if (commandName === 'morder') {
-        const alvo = options.getUser('membro');
+        const alvo = options.getUser('member');
         return interaction.reply(`😬 ${interaction.user} deu uma mordida em ${alvo}!\nhttps://tenor.com/bXuSq.gif`);
     }
 
     if (commandName === 'matar') {
-        const alvo = options.getUser('membro');
+        const alvo = options.getUser('member');
         return interaction.reply(`💀 ${interaction.user} molestou ${alvo}!\nhttps://tenor.com/vuJlRyJ0Zpu.gif`);
     }
 
@@ -865,16 +861,16 @@ client.on('interactionCreate', async (interaction) => {
     // --- AJUDA ---
     if (commandName === 'ajuda') {
         const embed = new EmbedBuilder()
-            .setColor(0xFF0000)
-            .setTitle('🔥 ARKILL - COMANDOS')
-            .setDescription('adiministration bot (test)')
+            .setColor(#000000)
+            .setTitle('🔥 ARKILL - COMMANDS')
+            .setDescription('administration bot (test)')
             .addFields(
                 { name: '⚙️ Configurações (Apenas Admins)', value: '`/config-boasvindas` \`/config-mensagem\` \`/config-cargo\`' },
                 { name: '🛡️ Moderação Básica & Avançada', value: '`/limpar` `/expulsar` `/banir` `/lock` `/unlock` `/modolento` `/warn` `/setnick`' },
                 { name: '📊 Utilidades', value: '`/ping` `/serverinfo` `/avatar` `/userinfo` `/uptime` `/falar` `/sorteio` `/convite` `/calculadora` `/regras` `/links`' },
-                { name: '😂 Diversão & Interação', value: '`/meme` `/dado` `/moeda` `/biscoito` `/8ball` `/abracar` `/beijar` `/tapa` `/cantada` `/piada` `/atacar` `/elogiar` `/reverso` `/ship` `/chances` `/gado` `/qi` `/dolar` `/escolha` `/diga` `/votar`' },
+                { name: '😂 Diversão & Interação', value: '`/meme` `/dado` `/moeda` `/biscoito` `/8ball` `/abracar` `/beijar` `/tapa` `/cantada`(`/piada`)(`/atacar`)(`/elogiar`)(`/reverso`)(`/ship`)(`/chances`)(`/gado`)(`/qi`)(`/dolar`)(`/escolha`)(`/diga`)(`/votar`)' },
                 { name: '💰 Economia', value: '`/saldo` `/daily` `/trabalhar` `/apostar` `/doar`' },
-                { name: '🎮 Mini Games & Ações', value: '`/jokenpo` `/adivinhe` `/fps` `/hackear` `/roleta` `/soco` `/morder` `/matar` `/correr`' }
+                { name: '🎮 Mini Games & Ações', value: '`/jokenpo` `/adivinhe` `/fps` `/hackear` `/roleta` `/soco` }}/morder`}(`/matar`)(`/correr`)' }
             );
         return interaction.reply({ embeds: [embed] });
     }
