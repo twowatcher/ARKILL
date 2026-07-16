@@ -321,7 +321,7 @@ client.on('interactionCreate', async (interaction) => {
 
     // ===================== FUN COMMANDS =====================
     if (commandName === 'meme') {
-        const memes = ["Why do programmers prefer dark mode? Because light attracts bugs.", "The code works... I don't know why. Don't touch it."];
+        const memes = ["Why do programmers prefer dark mode? Because light attracts bugs.", "The code works... I don't know why. Don't touch it.","https://tenor.com/tN24QWBRpuW.gif","https://tenor.com/bXdTS.gif",<div class="tenor-gif-embed" data-postid="11375078409552454630" data-share-method="host" data-aspect-ratio="1" data-width="100%"><a href="https://tenor.com/view/ultrakill-gabriel-ultrakill-ultrakill-gabriel-gif-11375078409552454630">Ultrakill Gabriel Ultrakill GIF</a>from <a href="https://tenor.com/search/ultrakill-gifs">Ultrakill GIFs</a></div> <script type="text/javascript" async src="https://tenor.com/embed.js"></script>];
         return interaction.reply(memes[Math.floor(Math.random() * memes.length)]);
     }
 
@@ -347,9 +347,9 @@ client.on('interactionCreate', async (interaction) => {
         return interaction.reply(`🔮 **Question:** ${question}\n**Answer:** ${answers[Math.floor(Math.random() * answers.length)]}`);
     }
 
-    if (commandName === 'hug') return interaction.reply(`🤗 ${user} hugged ${options.getUser('member')}!`);
-    if (commandName === 'kiss') return interaction.reply(`💋 ${user} kissed ${options.getUser('member')}!`);
-    if (commandName === 'slap') return interaction.reply(`💥 ${user} slapped ${options.getUser('member')}!`);
+    if (commandName === 'hug') return interaction.reply(`🤗 ${user} hugged ${options.getUser('member')}! https://tenor.com/b1Zxv.gif`);
+    if (commandName === 'kiss') return interaction.reply(`💋 ${user} kissed ${options.getUser('member')}! https://tenor.com/qp9WqCNJAo1.gif`);
+    if (commandName === 'slap') return interaction.reply(`💥 ${user} slapped ${options.getUser('member')}! https://tenor.com/m8uf7aoaTic.gif`);
     if (commandName === 'pickup-line') {
         const lines = ["Are you Wi-Fi? Because I'm feeling a connection.", "Do you have a map? I keep getting lost in your eyes."];
         return interaction.reply(lines[Math.floor(Math.random() * lines.length)]);
@@ -360,7 +360,7 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     if (commandName === 'attack') return interaction.reply(`⚔️ ${user} attacked ${options.getUser('member')} and dealt **${Math.floor(Math.random() * 100)}** damage!`);
-    if (commandName === 'compliment') return interaction.reply(`✨ ${options.getUser('member')}, ${user} says you're amazing!`);
+    if (commandName === 'compliment') return interaction.reply(`✨ ${options.getUser('member')}, ${user} says you're amazing! https://tenor.com/ngdezKbCGGU.gif`);
     if (commandName === 'reverse') return interaction.reply(options.getString('text').split('').reverse().join(''));
     if (commandName === 'ship') {
         const target = options.getUser('member');
