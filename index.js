@@ -866,8 +866,8 @@ client.on('interactionCreate', async (interaction) => {
     if (commandName === 'ajuda') {
         const embed = new EmbedBuilder()
             .setColor(0xFF0000)
-            .setTitle('🔥 ARKILL - COMANDOS DE BARRA')
-            .setDescription('O bot mais completo e zoeiro do pedaço agora atualizado para Slash Commands!')
+            .setTitle('🔥 ARKILL - COMANDOS')
+            .setDescription('adiministration bot (test)')
             .addFields(
                 { name: '⚙️ Configurações (Apenas Admins)', value: '`/config-boasvindas` \`/config-mensagem\` \`/config-cargo\`' },
                 { name: '🛡️ Moderação Básica & Avançada', value: '`/limpar` `/expulsar` `/banir` `/lock` `/unlock` `/modolento` `/warn` `/setnick`' },
