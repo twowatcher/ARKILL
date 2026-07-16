@@ -866,7 +866,7 @@ client.on('interactionCreate', async (interaction) => {
     if (commandName === 'ajuda') {
         const embed = new EmbedBuilder()
             .setColor(0xFF0000)
-            .setTitle('🔥 BLUUDUD BOT - COMANDOS DE BARRA')
+            .setTitle('🔥 ARKILL - COMANDOS DE BARRA')
             .setDescription('O bot mais completo e zoeiro do pedaço agora atualizado para Slash Commands!')
             .addFields(
                 { name: '⚙️ Configurações (Apenas Admins)', value: '`/config-boasvindas` \`/config-mensagem\` \`/config-cargo\`' },
