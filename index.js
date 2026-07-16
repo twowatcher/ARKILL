@@ -28,114 +28,113 @@ const iniciarConta = (id) => {
 // ==================== REGISTRO DOS SLASH COMMANDS ====================
 const commandsData = [
     {
-        name: 'config-boasvindas',
-        description: 'Configura o canal de boas-vindas do servidor.',
+        name: 'welcome-config',
+        description: 'Sets up the server´s welcome channel.',
         options: [{
-            name: 'canal',
-            description: 'Selecione o canal de texto',
+            name: 'channel',
+            description: 'Select the text channel.',
             type: ApplicationCommandOptionType.Channel,
             channelTypes: [ChannelType.GuildText],
             required: true
         }]
     },
     {
-        name: 'config-mensagem',
-        description: 'Define a mensagem customizada de boas-vindas.',
+        name: 'message-config',
+        description: 'Sets the custom welcome message.',
         options: [{
-            name: 'mensagem',
-            description: 'Use {membro}, {servidor} e {total} para customizar',
+            name: 'menssage',
+            description: 'Use {member}, {server}, and {total} to customize.',
             type: ApplicationCommandOptionType.String,
             required: true
         }]
     },
     {
         name: 'config-cargo',
-        description: 'Define o cargo automático dado aos novos membros.',
+        description: 'Sets the automatic role given to new members.',
         options: [{
             name: 'cargo',
-            description: 'Selecione o cargo',
+            description: 'Select the role',
             type: ApplicationCommandOptionType.Role,
             required: true
         }]
     },
     {
         name: 'ping',
-        description: 'Mostra a latência do bot.'
+        description: 'Shows the bot´s latency.'
     },
     {
-        name: 'limpar',
-        description: 'Apaga uma quantidade específica de mensagens do canal.',
+        name: 'clear',
+        description: 'Deletes a specific number of messages from the channel..',
         options: [{
-            name: 'quantidade',
-            description: 'Quantidade de mensagens (1 a 99)',
+            name: 'amount',
+            description: 'Number of messages (1 to 99)',
             type: ApplicationCommandOptionType.Integer,
             required: true
         }]
     },
     {
-        name: 'expulsar',
-        description: 'Expulsa um membro do servidor.',
+        name: 'Kick',
+        description: 'Kicks a member from the server.',
         options: [
-            { name: 'membro', description: 'Membro a ser expulso', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'motivo', description: 'Motivo do kick', type: ApplicationCommandOptionType.String, required: false }
+            { name: 'member', description: 'Member to be expelled', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'reason', description: 'Reason for the kick', type: ApplicationCommandOptionType.String, required: false }
         ]
     },
     {
-        name: 'banir',
-        description: 'Bane um membro do servidor.',
+        name: 'ban',
+        description: 'Ban a server member. .',
         options: [
-            { name: 'membro', description: 'Membro a ser banido', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'motivo', description: 'Motivo do banimento', type: ApplicationCommandOptionType.String, required: false }
+            { name: 'member', description: 'Member to be banned', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'reason', description: 'Reason for the ban', type: ApplicationCommandOptionType.String, required: false }
         ]
     },
     {
         name: 'meme',
-        description: 'Envia um meme ou frase engraçada aleatória.'
-    },
+        description: 'Send a random meme or funny quote.'},
     {
         name: 'lock',
-        description: 'Tranca o canal de texto atual.'
+        description: 'lock current text channel.'
     },
     {
         name: 'unlock',
-        description: 'Destranca o canal de texto atual.'
+        description: 'unlock current text channel.'
     },
     {
-        name: 'modolento',
-        description: 'Define o modo lento do canal atual.',
+        name: 'slow-mode',
+        description: 'set slow mode on the current channel.',
         options: [{
-            name: 'segundos',
-            description: 'Tempo em segundos (use 0 para desativar)',
+            name: 'seconds',
+            description: 'Time in seconds (0 to disable)',
             type: ApplicationCommandOptionType.Integer,
             required: true
         }]
     },
     {
         name: 'warn',
-        description: 'Dá um aviso chamando a atenção de um membro.',
+        description: 'Issues a warning to draw a member´s attention.',
         options: [
-            { name: 'membro', description: 'Membro a receber o aviso', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'motivo', description: 'Motivo do aviso', type: ApplicationCommandOptionType.String, required: false }
+            { name: 'member', description: 'Member to receive the warning', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'reason', description: 'Reason for the warning', type: ApplicationCommandOptionType.String, required: false }
         ]
     },
     {
         name: 'setnick',
-        description: 'Altera o apelido de um membro.',
+        description: 'changes a member´s nickname.',
         options: [
-            { name: 'membro', description: 'Selecione o membro', type: ApplicationCommandOptionType.User, required: true },
-            { name: 'apelido', description: 'Novo apelido', type: ApplicationCommandOptionType.String, required: true }
+            { name: 'member', description: 'Select the member', type: ApplicationCommandOptionType.User, required: true },
+            { name: 'nickname', description: 'New nickname', type: ApplicationCommandOptionType.String, required: true }
         ]
     },
     {
         name: 'serverinfo',
-        description: 'Exibe informações do servidor.'
+        description: 'displays server information'
     },
     {
         name: 'avatar',
-        description: 'Mostra o avatar de um usuário ou o seu próprio.',
+        description: 'Shows the avatar of a user or your own.',
         options: [{
             name: 'usuario',
-            description: 'Selecione o usuário (deixe em branco para o seu)',
+            description: 'Select the user (leave blank for yours)',
             type: ApplicationCommandOptionType.User,
             required: false
         }]
@@ -499,7 +498,7 @@ client.on('interactionCreate', async (interaction) => {
         
         await interaction.deferReply({ ephemeral: true });
         await channel.bulkDelete(qtd, true);
-        await interaction.editReply(`🧹 Limpei ${qtd} mensagens, tá me devendo um monster!`);
+        await interaction.editReply(`🧹 Limpei ${qtd} mensagens, denada!`);
     }
 
     if (commandName === 'expulsar') {
@@ -888,7 +887,7 @@ const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
-    res.send('Bluudud Bot está online com Slash Commands! 🔥');
+    res.send('ARKILL está online!🔥');
 });
 
 const PORT = process.env.PORT || 3000;
