@@ -9,9 +9,10 @@ const {
 } = require('discord.js');
 const Database = require('better-sqlite3');
 
+// Inicializa o Banco de Dados SQLite
 const db = new Database('database.sqlite');
 
-// Criação das tabelas
+// Criação das tabelas caso não existam
 db.prepare(`
     CREATE TABLE IF NOT EXISTS bank (
         userId TEXT PRIMARY KEY,
@@ -36,16 +37,17 @@ const client = new Client({
     ]
 });
 
+// Cores padrões para os Embeds
 const COLORS = {
-    SUCCESS: 0x00FF99,
-    ERROR: 0xFF3333,
-    INFO: 0x0099FF,
-    FUN: 0x9933FF,
-    ECONOMY: 0xFFCC00,
-    NEUTRAL: 0x2F3136
+    SUCCESS: 0x00FF99,  // Verde claro
+    ERROR: 0xFF3333,    // Vermelho
+    INFO: 0x0099FF,     // Azul
+    FUN: 0x9933FF,      // Roxo
+    ECONOMY: 0xFFCC00,  // Dourado/Amarelo
+    NEUTRAL: 0x2F3136   // Cinza escuro (padrão Discord)
 };
 
-// ==================== BANCO DE DADOS ====================
+// ==================== FUNÇÕES AUXILIARES DO BANCO ====================
 const getAccount = (userId) => {
     let row = db.prepare('SELECT * FROM bank WHERE userId = ?').get(userId);
     if (!row) {
@@ -74,7 +76,7 @@ const updateWelcomeConfig = (guildId, field, value) => {
     db.prepare(`UPDATE welcomeConfig SET ${field} = ? WHERE guildId = ?`).run(value, guildId);
 };
 
-// Registros dos Comandos
+// ==================== SLASH COMMANDS REGISTRATION ====================
 const commandsData = [
     { name: 'welcome-config', description: 'Set the welcome channel for new members.', options: [{ name: 'channel', description: 'Select the text channel', type: ApplicationCommandOptionType.Channel, channelTypes: [ChannelType.GuildText], required: true }] },
     { name: 'message-config', description: 'Set the custom welcome message.', options: [{ name: 'message', description: 'Use {member}, {server}, and {total} as placeholders.', type: ApplicationCommandOptionType.String, required: true }] },
@@ -150,7 +152,7 @@ const commandsData = [
     { name: 'help', description: 'Show all available commands.' }
 ];
 
-// Evento de Boas-vindas
+// ==================== WELCOME EVENT ====================
 client.on('guildMemberAdd', async (member) => {
     const config = getWelcomeConfig(member.guild.id);
     if (!config) return;
@@ -181,6 +183,7 @@ client.on('guildMemberAdd', async (member) => {
     }
 });
 
+// ==================== BOT READY ====================
 client.once('ready', async () => {
     console.log(`✅ ${client.user.tag} is online!`);
     client.user.setActivity('moderating with style', { type: 3 });
@@ -193,12 +196,13 @@ client.once('ready', async () => {
     }
 });
 
-// Handler de Interações
+// ==================== COMMAND HANDLER ====================
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName, options, guild, member, channel, user } = interaction;
 
+    // Helper rápido para gerar Embeds de resposta padrão (Sucesso, Erro, Info, etc.)
     const replyEmbed = (title, description, color = COLORS.INFO, ephemeral = false) => {
         const embed = new EmbedBuilder()
             .setColor(color)
@@ -449,12 +453,7 @@ client.on('interactionCreate', async (interaction) => {
 
     // ===================== FUN COMMANDS =====================
     if (commandName === 'meme') {
-        const memes = [
-            "Why do programmers prefer dark mode? Because light attracts bugs.", 
-            "The code works... I don't know why. Don't touch it.",
-            "https://media.tenor.com/g3S_vA9un70AAAAC/anime-hug.gif",
-            "https://media.tenor.com/X5v_O-5e87gAAAAC/anime-happy.gif"
-        ];
+        const memes = ["Why do programmers prefer dark mode? Because light attracts bugs.", "The code works... I don't know why. Don't touch it.","https://tenor.com/tN24QWBRpuW.gif","https://tenor.com/bXdTS.gif"];
         const select = memes[Math.floor(Math.random() * memes.length)];
         
         const embed = new EmbedBuilder().setColor(COLORS.FUN).setTitle('🤣 Random Meme');
@@ -503,7 +502,7 @@ client.on('interactionCreate', async (interaction) => {
         const embed = new EmbedBuilder()
             .setColor(COLORS.FUN)
             .setDescription(`🤗 **${user}** gave **${target}** a warm, cozy hug!`)
-            .setImage('https://media.tenor.com/g3S_vA9un70AAAAC/anime-hug.gif');
+            .setImage('https://tenor.com/b1Zxv.gif');
         return interaction.reply({ embeds: [embed] });
     }
 
@@ -512,7 +511,7 @@ client.on('interactionCreate', async (interaction) => {
         const embed = new EmbedBuilder()
             .setColor(COLORS.FUN)
             .setDescription(`💋 **${user}** kissed **${target}** tenderly!`)
-            .setImage('https://media.tenor.com/F02Ep3876BsAAAAC/anime-kiss.gif');
+            .setImage('https://tenor.com/qp9WqCNJAo1.gif');
         return interaction.reply({ embeds: [embed] });
     }
 
@@ -521,7 +520,7 @@ client.on('interactionCreate', async (interaction) => {
         const embed = new EmbedBuilder()
             .setColor(COLORS.FUN)
             .setDescription(`💥 **${user}** slapped **${target}** right across the face! Ouch!`)
-            .setImage('https://media.tenor.com/LsOTv0S0g8YAAAAC/anime-slap.gif');
+            .setImage('https://tenor.com/m8uf7aoaTic.gif');
         return interaction.reply({ embeds: [embed] });
     }
 
@@ -548,7 +547,7 @@ client.on('interactionCreate', async (interaction) => {
         const embed = new EmbedBuilder()
             .setColor(COLORS.FUN)
             .setDescription(`✨ ${target}, **${user.username}** wants you to know that you're absolutely amazing!`)
-            .setImage('https://media.tenor.com/X5v_O-5e87gAAAAC/anime-happy.gif');
+            .setImage('https://tenor.com/ngdezKbCGGU.gif');
         return interaction.reply({ embeds: [embed] });
     }
 
@@ -725,6 +724,7 @@ client.on('interactionCreate', async (interaction) => {
         return replyEmbed('🏃💨 Escape Route', `**${user.username}** got scared and sprinted out of the channel!`, COLORS.FUN);
     }
 
+    // ===================== HELP =====================
     if (commandName === 'help') {
         const embed = new EmbedBuilder()
             .setColor(COLORS.NEUTRAL)
@@ -745,7 +745,7 @@ client.on('interactionCreate', async (interaction) => {
 
 client.login(process.env.TOKEN);
 
-// Keep alive
+// ==================== KEEP ALIVE ====================
 const express = require('express');
 const app = express();
 app.get('/', (req, res) => res.send('Bot is online! 🔥'));
