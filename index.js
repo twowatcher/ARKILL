@@ -118,7 +118,7 @@ const commandsData = [
     { name: 'chances', description: 'Calculate the chance of something happening.', options: [{ name: 'question', description: 'Chance of what?', type: ApplicationCommandOptionType.String, required: true }] },
     { name: 'cow-level', description: 'Check someone\'s simp level.', options: [{ name: 'user', description: 'Select the user', type: ApplicationCommandOptionType.User, required: false }] },
     { name: 'iq', description: 'Calculate someone\'s IQ.', options: [{ name: 'user', description: 'Select the user', type: ApplicationCommandOptionType.User, required: false }] },
-    { name: 'dollar', description: 'Get a funny take on the dollar exchange rate.' },
+    { name: 'killcoin', description: 'Get a funny take on the killcoin exchange rate.' },
     { name: 'choose', description: 'Make the bot choose between options.', options: [
         { name: 'option1', description: 'First option', type: ApplicationCommandOptionType.String, required: true },
         { name: 'option2', description: 'Second option', type: ApplicationCommandOptionType.String, required: true }
@@ -126,9 +126,9 @@ const commandsData = [
     { name: 'poll', description: 'Create a yes/no poll.', options: [{ name: 'topic', description: 'Poll topic', type: ApplicationCommandOptionType.String, required: true }] },
     { name: 'balance', description: 'Check your balance.' },
     { name: 'daily', description: 'Claim your daily reward.' },
-    { name: 'work', description: 'Work and earn money.' },
+    { name: 'work', description: 'Work and earn killcoins.' },
     { name: 'bet', description: 'Bet on a coin flip.', options: [{ name: 'amount', description: 'Amount to bet', type: ApplicationCommandOptionType.Integer, required: true }] },
-    { name: 'donate', description: 'Donate money to a friend.', options: [
+    { name: 'donate', description: 'Donate killcoins to a friend.', options: [
         { name: 'member', description: 'Recipient', type: ApplicationCommandOptionType.User, required: true },
         { name: 'amount', description: 'Amount to donate', type: ApplicationCommandOptionType.Integer, required: true }
     ]},
@@ -225,7 +225,7 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     // ===================== MODERATION =====================
-    if (commandName === 'ping') return interaction.reply(`🏓 Pong! ${Date.now() - interaction.createdTimestamp}ms`);
+    if (commandName === 'ping') return interaction.reply(`🏓 Pong! ${Date.now() - interaction.createdTimestamp}ms https://tenor.com/bsUWw.gif`);
 
     if (commandName === 'clear') {
         if (!member.permissions.has(PermissionsBitField.Flags.ManageMessages))
@@ -327,7 +327,7 @@ client.on('interactionCreate', async (interaction) => {
         totalSeconds %= 3600;
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
-        return interaction.reply(`⏰ Online for: \`${days}d ${hours}h ${minutes}m ${seconds}s\``);
+        return interaction.reply(`⏰ Online for: \`${days}d ${hours}h ${minutes}m ${seconds}s\` https://tenor.com/u5oj4UzsRJq.gif`);
     }
 
     if (commandName === 'say') {
@@ -375,9 +375,9 @@ client.on('interactionCreate', async (interaction) => {
         return interaction.reply(`🎲 You rolled a ${sides}-sided die and got: **${result}**`);
     }
 
-    if (commandName === 'coin-flip') {
+    if (commandName === 'Killcoin-flip') {
         const result = Math.random() > 0.5 ? 'Heads' : 'Tails';
-        return interaction.reply(`🪙 It landed on **${result}**!`);
+        return interaction.reply(`🪙 It landed on **${result}**! https://tenor.com/uGC4PZvUSWi.gif`);
     }
 
     if (commandName === 'fortune-cookie') {
@@ -419,7 +419,7 @@ client.on('interactionCreate', async (interaction) => {
         const target = options.getUser('user') || user;
         return interaction.reply(`🧠 ${target.username}'s IQ is **${Math.floor(Math.random() * 200)}**.`);
     }
-    if (commandName === 'dollar') return interaction.reply('💵 The dollar is expensive today. Go work!');
+    if (commandName === 'KILLCOIN') return interaction.reply('💵 The killcoin is expensive today. Go work!');
     if (commandName === 'choose') {
         const opt1 = options.getString('option1');
         const opt2 = options.getString('option2');
