@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Hayley Clark | Loja de Poderes</title>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #e6e6e6;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+        }
+        .bg-animated {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #1a1a1a 10%, #050505 90%);
+            z-index: -1;
+            animation: pulseBg 12s infinite alternate;
+        }
+        @keyframes pulseBg {
+            0% { filter: brightness(0.8); }
+            100% { filter: brightness(1.2); }
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid #262626;
+            background: rgba(13, 13, 13, 0.85);
+            backdrop-filter: blur(8px);
+        }
+        .logo { font-size: 20px; font-weight: bold; text-transform: uppercase; }
+        nav a { color: #b3b3b3; text-decoration: none; margin: 0 15px; padding: 8px 16px; border: 1px solid transparent; transition: 0.3s; }
+        nav a:hover, nav a.active { color: #fff; border: 1px solid #fff; background: #1a1a1a; }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+        .loja-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .card {
+            background: rgba(18, 18, 18, 0.95);
+            border: 1px solid #333;
+            border-radius: 4px;
+            overflow: hidden;
+            text-align: center;
+            padding-bottom: 25px;
+            transition: 0.3s;
+        }
+        .card:hover {
+            border-color: #fff;
+            transform: translateY(-5px);
+        }
+        .card-banner {
+            height: 8px;
+            background: #fff;
+        }
+        .card-body {
+            padding: 25px;
+        }
+        .card h3 {
+            text-transform: uppercase;
+            font-size: 20px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .card p {
+            color: #888;
+            font-size: 14px;
+            min-height: 45px;
+            margin-bottom: 20px;
+        }
+        .card-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .btn-buy {
+            width: 80%;
+            padding: 12px 0;
+            background: #fff;
+            color: #000;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+        .btn-buy:hover {
+            background: #ccc;
+        }
+        .btn-owned {
+            width: 80%;
+            padding: 12px 0;
+            background: #222;
+            color: #666;
+            border: 1px solid #333;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animated"></div>
+    <header>
+        <div class="logo">Hayley Clark</div>
+        <nav>
+            <a href="/">Início</a>
+            <a href="/daily">Daily</a>
+            <a href="/loja" class="active">Loja</a>
+            <a href="/logout" style="color: #ff3333;">Sair</a>
+        </nav>
+        <div>
+            <span><strong><%= user.username %></strong> (<%= balance %> Killcoins)</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 style="text-align: center; text-transform: uppercase; letter-spacing: 2px;">Loja de Colecionáveis</h1>
+        <p style="text-align: center; color: #888;">Gaste suas Killcoins adquirindo os poderes supremos de Hayley.</p>
+
+        <div class="loja-grid">
+            <% items.forEach(item => { %>
+                <div class="card">
+                    <div class="card-banner"></div>
+                    <div class="card-body">
+                        <h3><%= item.name %></h3>
+                        <p><%= item.desc %></p>
+                        <div class="card-price"><%= item.price.toLocaleString('pt-BR') %> Killcoins</div>
+                        
+                        <% if (ownedItems.includes(item.id)) { %>
+                            <button class="btn-owned" disabled>Adquirido</button>
+                        <% } else { %>
+                            <form action="/loja/comprar" method="POST">
+                                <input type="hidden" name="itemId" value="<%= item.id %>">
+                                <button type="submit" class="btn-buy">Adquirir</button>
+                            </form>
+                        <% } %>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+</body>
+</html>
