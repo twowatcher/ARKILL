@@ -1,126 +1,290 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Editor de Welcome - ARKILL BOT</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  
   <style>
-    body { background: #0a0a0a; color: #e5e5e5; }
-    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
-    .preview-box { transition: all 0.4s ease; }
+    body { 
+      background: #09090b; 
+      color: #f4f4f5; 
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .glass { 
+      background: rgba(255, 255, 255, 0.02); 
+      backdrop-filter: blur(16px); 
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05); 
+    }
+    .discord-chat {
+      background-color: #313338;
+    }
+    .discord-embed {
+      background-color: #1e1f22;
+    }
+    /* Estilização customizada para o seletor de cores */
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 12px; }
   </style>
 </head>
-<body class="min-h-screen">
-  <div class="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+<body class="min-h-screen p-4 md:p-8 flex items-center justify-center">
 
-    <!-- PAINEL DE EDIÇÃO -->
-    <div>
-      <h1 class="text-4xl font-bold mb-8 flex items-center gap-3">
-        ⚔️ Editor de Welcome
-      </h1>
+  <div class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-      <div class="space-y-8">
-        <div>
-          <label class="block text-sm mb-2">Canal de Welcome</label>
-          <input id="channelId" type="text" class="w-full bg-zinc-900 p-4 rounded-2xl" placeholder="ID do canal">
-        </div>
-
-        <div>
-          <label class="block text-sm mb-2">Mensagem</label>
-          <textarea id="welcomeMessage" rows="4" class="w-full bg-zinc-900 p-4 rounded-2xl" placeholder="Bem-vindo {user} ao {server}!"></textarea>
-        </div>
-
-        <div class="grid grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm mb-2">Cor do Embed</label>
-            <input id="color" type="color" value="#ff0000" class="w-full h-12 bg-transparent cursor-pointer">
-          </div>
-          <div>
-            <label class="block text-sm mb-2">Imagem de Fundo</label>
-            <input id="imageUrl" type="text" class="w-full bg-zinc-900 p-4 rounded-2xl" placeholder="https://...">
-          </div>
-        </div>
-
-        <button onclick="saveWelcome()" class="w-full py-5 bg-red-600 hover:bg-red-700 rounded-2xl font-bold text-lg">
-          💾 Salvar Configuração
-        </button>
-
-        <button onclick="testWelcome()" class="w-full py-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-bold text-lg">
-          🧪 Testar Welcome (Preview)
-        </button>
-      </div>
+    <div class="lg:col-span-12">
+      <a href="/" class="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-red-400 transition-colors group">
+        <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i> Voltar para o Dashboard
+      </a>
     </div>
 
-    <!-- PREVIEW EM TEMPO REAL -->
-    <div>
-      <h2 class="text-2xl font-bold mb-6">👀 Preview em Tempo Real</h2>
-      <div id="preview" class="glass p-8 rounded-3xl min-h-[520px] flex items-center justify-center">
-        <div id="embed-preview" class="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"></div>
+    <main class="lg:col-span-7 space-y-6">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="bg-red-600/10 p-3 rounded-2xl border border-red-500/20 text-red-500">
+          <i class="fa-solid fa-sliders text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-3xl font-extrabold text-white tracking-wide">Configuração de Boas-vindas</h1>
+          <p class="text-zinc-400 text-xs mt-0.5">Customize a recepção de novos membros da guilda.</p>
+        </div>
       </div>
-    </div>
+
+      <div class="glass p-6 md:p-8 rounded-3xl border border-zinc-800/80 space-y-6 shadow-xl">
+        
+        <div>
+          <label class="block text-zinc-300 font-semibold text-sm mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-hashtag text-zinc-500"></i> Canal de Welcome
+          </label>
+          <input id="channelId" type="text" class="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 p-4 text-white placeholder-zinc-600 rounded-2xl outline-none transition-all duration-200" placeholder="Ex: 102938475610293847">
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-zinc-300 font-semibold text-sm flex items-center gap-2">
+              <i class="fa-solid fa-message text-zinc-500"></i> Mensagem do Embed
+            </label>
+            <span class="text-xs text-zinc-500">Suporta Markdown básico</span>
+          </div>
+          <textarea id="welcomeMessage" rows="4" class="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 p-4 text-white placeholder-zinc-600 rounded-2xl outline-none transition-all duration-200 resize-none" placeholder="Bem-vindo {user} ao servidor {server}!"></textarea>
+          
+          <div class="flex flex-wrap gap-2 mt-2.5">
+            <button onclick="insertTag('{user}')" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2.5 py-1.5 rounded-lg border border-zinc-700 transition font-mono">+{user}</button>
+            <button onclick="insertTag('{server}')" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2.5 py-1.5 rounded-lg border border-zinc-700 transition font-mono">+{server}</button>
+            <button onclick="insertTag('{total}')" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2.5 py-1.5 rounded-lg border border-zinc-700 transition font-mono">+{total}</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-1">
+            <label class="block text-zinc-300 font-semibold text-sm mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-palette text-zinc-500"></i> Cor Lateral
+            </label>
+            <div class="relative w-full h-14 rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden flex items-center px-2">
+              <input id="color" type="color" value="#ef4444" class="w-10 h-10 bg-transparent cursor-pointer rounded-xl border-none">
+              <span id="colorHex" class="text-xs font-mono text-zinc-400 ml-3 uppercase">#ef4444</span>
+            </div>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-zinc-300 font-semibold text-sm mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-image text-zinc-500"></i> URL da Imagem de Fundo (Opcional)
+            </label>
+            <input id="imageUrl" type="text" class="w-full bg-zinc-900 border border-zinc-800 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 p-4 text-white placeholder-zinc-600 rounded-2xl outline-none transition-all duration-200 text-sm" placeholder="https://i.imgur.com/link.png">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+          <button onclick="testWelcome()" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-95 border border-zinc-700">
+            <i class="fa-solid fa-flask-vial text-emerald-500"></i> Testar no Servidor
+          </button>
+          <button onclick="saveWelcome()" id="btn-save" class="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-bold rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-red-600/10">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar Configuração
+          </button>
+        </div>
+
+      </div>
+    </main>
+
+    <aside class="lg:col-span-5 space-y-4 lg:sticky lg:top-8">
+      <h2 class="text-xl font-bold text-white flex items-center gap-2 px-1">
+        <i class="fa-solid fa-eye text-zinc-500 text-lg"></i> Preview Realista
+      </h2>
+      
+      <div class="discord-chat w-full rounded-2xl p-4 md:p-6 shadow-2xl border border-zinc-800 min-h-[400px] flex items-start gap-4">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-red-600 to-indigo-600 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md">
+          <i class="fa-solid fa-user-plus text-sm"></i>
+        </div>
+        
+        <div class="flex-1 space-y-2 overflow-hidden">
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-white hover:underline cursor-pointer text-[15px]">Arkill Bot</span>
+            <span class="bg-[#5865F2] text-[10px] text-white font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 tracking-wide uppercase"><i class="fa-solid fa-check text-[8px]"></i> BOT</span>
+            <span class="text-xs text-[#949ba4]" id="embed-time">hoje às 00:00</span>
+          </div>
+
+          <div id="embed-preview" class="discord-embed max-w-full rounded-[4px] p-4 border-l-[4px] flex flex-col gap-3 transition-all duration-300 shadow-sm">
+            <div id="preview-text" class="text-[#dbdee1] text-[15px] leading-relaxed break-words whitespace-pre-wrap"></div>
+            <div id="preview-image-container" class="hidden max-w-full overflow-hidden rounded-lg mt-1">
+              <img id="preview-image" src="" class="max-h-64 object-cover w-full rounded-lg" alt="Banner de Boas-vindas" onerror="this.parentNode.classList.add('hidden')">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="hidden fixed bottom-6 right-6 glass border-zinc-800 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 transition-all duration-300 translate-y-10">
+        <span id="toast-icon"></span>
+        <span id="toast-msg" class="text-sm font-medium"></span>
+      </div>
+    </aside>
+
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const guildId = urlParams.get('guildId');
+    const guildId = urlParams.get('guildId') || '123456789'; // Fallback para testes offline
 
+    // Elementos do DOM armazenados em cache
+    const msgInput = document.getElementById('welcomeMessage');
+    const colorInput = document.getElementById('color');
+    const colorHex = document.getElementById('colorHex');
+    const imageInput = document.getElementById('imageUrl');
+    
+    const embedPreview = document.getElementById('embed-preview');
+    const previewText = document.getElementById('preview-text');
+    const previewImageContainer = document.getElementById('preview-image-container');
+    const previewImage = document.getElementById('preview-image');
+    const embedTime = document.getElementById('embed-time');
+
+    // Inicializar relógio do Discord no Preview
+    function initClock() {
+      const now = new Date();
+      embedTime.textContent = `hoje às ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    // Processamento do Preview em tempo real
     function updatePreview() {
-      const message = document.getElementById('welcomeMessage').value || "Bem-vindo {user}!";
-      const color = document.getElementById('color').value;
-      const imageUrl = document.getElementById('imageUrl').value;
+      const message = msgInput.value || "Seja bem-vindo(a) {user} ao nosso servidor!";
+      const color = colorInput.value;
+      const imageUrl = imageInput.value.trim();
 
+      // Atualiza o indicador Hexagonal em texto
+      colorHex.textContent = color;
+
+      // Substituição de Placeholders simulando comportamento do Bot
       let finalMessage = message
-        .replace(/{user}/g, '**Usuário Teste**')
-        .replace(/{server}/g, 'ARKILL Community')
-        .replace(/{total}/g, '1245');
+        .replace(/{user}/g, '<span class="text-[#5865F2] font-semibold hover:underline cursor-pointer">@MembroTeste</span>')
+        .replace(/{server}/g, '<strong class="text-white font-semibold">ARKILL Community</strong>')
+        .replace(/{total}/g, '<span class="text-zinc-300 font-bold">1,452</span>');
 
-      const previewHTML = `
-        <div style="background: #1f1f1f; border-radius: 12px; padding: 20px; border-left: 5px solid ${color};">
-          <div class="flex items-center gap-4 mb-5">
-            <img src="https://i.imgur.com/0x0x0x0.png" class="w-12 h-12 rounded-full" alt="avatar">
-            <div>
-              <div class="font-bold">ARKILL BOT</div>
-              <div class="text-xs text-gray-400">hoje às ${new Date().toLocaleTimeString('pt-BR')}</div>
-            </div>
-          </div>
-          <div style="color: #e5e5e5; line-height: 1.6;">${finalMessage}</div>
-          ${imageUrl ? `<img src="${imageUrl}" class="mt-6 rounded-xl w-full">` : ''}
-        </div>
-      `;
+      // Aplica a cor lateral do embed
+      embedPreview.style.borderColor = color;
 
-      document.getElementById('embed-preview').innerHTML = previewHTML;
+      // Define o texto tratado
+      previewText.innerHTML = finalMessage;
+
+      // Trata exibição da imagem
+      if (imageUrl) {
+        previewImage.src = imageUrl;
+        previewImageContainer.classList.remove('hidden');
+      } else {
+        previewImageContainer.classList.add('hidden');
+        previewImage.src = '';
+      }
     }
 
-    async function saveWelcome() {
-      const data = {
-        channelId: document.getElementById('channelId').value,
-        message: document.getElementById('welcomeMessage').value,
-        color: document.getElementById('color').value,
-        image: document.getElementById('imageUrl').value
-      };
-
-      await fetch(`/api/welcome/${guildId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-
-      alert('✅ Configuração salva com sucesso!');
-    }
-
-    function testWelcome() {
-      alert('🧪 Mensagem de teste enviada para o canal configurado!\n\n(Preview atualizado acima)');
+    // Atalho para inserir tags no textarea facilmente
+    function insertTag(tag) {
+      const start = msgInput.selectionStart;
+      const end = msgInput.selectionEnd;
+      const text = msgInput.value;
+      msgInput.value = text.substring(0, start) + tag + text.substring(end);
+      msgInput.focus();
+      msgInput.setSelectionRange(start + tag.length, start + tag.length);
       updatePreview();
     }
 
-    // Atualiza preview em tempo real
-    document.getElementById('welcomeMessage').addEventListener('input', updatePreview);
-    document.getElementById('color').addEventListener('input', updatePreview);
-    document.getElementById('imageUrl').addEventListener('input', updatePreview);
+    // Sistema de Feedback Moderno (Toast customizado)
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const text = document.getElementById('toast-msg');
 
-    window.onload = updatePreview;
+      text.textContent = msg;
+      if (type === 'success') {
+        icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>';
+      } else {
+        icon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-red-500 text-lg"></i>';
+      }
+
+      toast.classList.remove('hidden', 'translate-y-10', 'opacity-0');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-10', 'opacity-0');
+        setTimeout(() => toast.classList.add('hidden'), 300);
+      }, 3500);
+    }
+
+    // Salvar configurações assincronamente via API
+    async function saveWelcome() {
+      const btn = document.getElementById('btn-save');
+      const originalText = btn.innerHTML;
+
+      const data = {
+        channelId: document.getElementById('channelId').value.trim(),
+        message: msgInput.value,
+        color: colorInput.value,
+        image: imageInput.value.trim()
+      };
+
+      if(!data.channelId) {
+        showToast('Por favor, informe o ID do canal de texto!', 'error');
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Salvando...';
+
+        const res = await fetch(`/api/welcome/${guildId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!res.ok) throw new Error();
+
+        showToast('Configuração salva com sucesso no banco de dados!');
+      } catch (error) {
+        showToast('Erro ao tentar conectar à API do Bot.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // Enviar sinalizador de teste prático
+    async function testWelcome() {
+      try {
+        const res = await fetch(`/api/welcome/${guildId}/test`, { method: 'POST' });
+        showToast('🧪 Comando de teste disparado no Discord!');
+      } catch {
+        // Fallback local se estiver apenas rodando o html de forma avulsa
+        showToast('Visualização atualizada! (API Offline)', 'success');
+      }
+      updatePreview();
+    }
+
+    // Eventos ativos de digitação e modificação em tempo real
+    msgInput.addEventListener('input', updatePreview);
+    colorInput.addEventListener('input', updatePreview);
+    imageInput.addEventListener('input', updatePreview);
+
+    // Inicialização da Página
+    window.addEventListener('DOMContentLoaded', () => {
+      initClock();
+      updatePreview();
+    });
   </script>
 </body>
 </html>

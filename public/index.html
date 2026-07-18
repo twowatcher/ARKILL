@@ -1,72 +1,188 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ARKILL BOT</title>
+  <title>ARKILL BOT - Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  
   <style>
-    body { background: #0a0a0a; color: #e5e5e5; }
-    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
+    body { 
+      background: #09090b; 
+      color: #f4f4f5; 
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .glass { 
+      background: rgba(255, 255, 255, 0.03); 
+      backdrop-filter: blur(12px); 
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08); 
+    }
+    .neon-text {
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    }
+    .neon-border:hover {
+      border-color: rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.15);
+    }
   </style>
 </head>
-<body class="min-h-screen">
-  <div class="max-w-6xl mx-auto p-8">
-    <div class="flex justify-between items-center mb-12">
-      <h1 class="text-5xl font-bold">⚔️ ARKILL BOT</h1>
-      <button onclick="logout()" class="hidden px-6 py-3 bg-red-600 rounded-2xl" id="logout-btn">Sair</button>
-    </div>
+<body class="min-h-screen flex flex-col justify-between selection:bg-red-500 selection:text-white">
 
-    <div id="login-screen">
-      <button onclick="login()" class="w-full max-w-md mx-auto block bg-indigo-600 py-6 text-xl rounded-3xl hover:bg-indigo-700">
-        Entrar com Discord
+  <div class="max-w-6xl w-full mx-auto p-6 md:p-12 grow">
+    
+    <header class="flex justify-between items-center mb-16 pb-6 border-b border-zinc-800">
+      <div class="flex items-center gap-3">
+        <div class="bg-red-600/20 p-2.5 rounded-xl border border-red-500/30">
+          <i class="fa-solid fa-crosshairs text-2xl text-red-500 animate-pulse"></i>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-red-500 uppercase neon-text">
+          Arkill Bot
+        </h1>
+      </div>
+      <button onclick="logout()" class="hidden px-5 py-2.5 bg-zinc-900 hover:bg-red-950 text-zinc-300 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 rounded-xl transition-all duration-300 font-medium flex items-center gap-2" id="logout-btn">
+        <i class="fa-solid fa-right-from-bracket text-sm"></i> Sair
       </button>
-    </div>
+    </header>
 
-    <div id="dashboard" class="hidden">
-      <h2 class="text-3xl mb-8">Seus Servidores</h2>
-      <div id="server-list" class="grid md:grid-cols-2 gap-6"></div>
-    </div>
+    <main>
+      <div id="login-screen" class="max-w-md mx-auto my-12 text-center glass p-8 md:p-12 rounded-3xl border border-zinc-800 shadow-2xl">
+        <div class="w-20 h-20 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-3xl flex items-center justify-center mx-auto mb-6 text-3xl shadow-lg">
+          <i class="fa-brands fa-discord animate-bounce"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-3 text-white">Bem-vindo ao Painel</h2>
+        <p class="text-zinc-400 text-sm mb-8">Gerencie as configurações de boas-vindas do Arkill Bot nos seus servidores de forma rápida e segura.</p>
+        
+        <button onclick="login()" class="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white py-4 px-6 text-base font-semibold rounded-2xl shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30 active:scale-[0.98] transition-all duration-200">
+          <i class="fa-brands fa-discord text-xl"></i>
+          Entrar com o Discord
+        </button>
+      </div>
+
+      <section id="dashboard" class="hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-server text-red-500 text-xl"></i> Seus Servidores
+            </h2>
+            <p class="text-zinc-400 text-sm mt-1">Selecione uma guilda para configurar o bot.</p>
+          </div>
+          <span class="text-xs bg-zinc-800 text-zinc-400 border border-zinc-700 px-3 py-1.5 rounded-full font-mono self-start" id="server-count">
+            Carregando servidores...
+          </span>
+        </div>
+        
+        <div id="server-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="glass p-6 rounded-2xl animate-pulse border border-zinc-800 h-44 flex flex-col justify-between">
+            <div class="h-6 bg-zinc-800 rounded w-2/3"></div>
+            <div class="h-12 bg-zinc-800 rounded-xl w-full"></div>
+          </div>
+          <div class="glass p-6 rounded-2xl animate-pulse border border-zinc-800 h-44 flex flex-col justify-between">
+            <div class="h-6 bg-zinc-800 rounded w-1/2"></div>
+            <div class="h-12 bg-zinc-800 rounded-xl w-full"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
   </div>
 
-  <script>
-    async function login() { window.location.href = '/login'; }
-    async function logout() { window.location.href = '/logout'; }
+  <footer class="w-full text-center py-6 border-t border-zinc-900 text-xs text-zinc-600 font-mono mt-12">
+    &copy; 2026 Arkill Bot. Todos os direitos reservados.
+  </footer>
 
+  <script>
+    // Redirecionamento Simples
+    function login() { window.location.href = '/login'; }
+    function logout() { window.location.href = '/logout'; }
+
+    // Controla o fluxo inicial ao carregar a página
     async function loadDashboard() {
-      const res = await fetch('/api/me');
-      if (res.status === 401) return;
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('dashboard').classList.remove('hidden');
-      document.getElementById('logout-btn').classList.remove('hidden');
-      loadServers();
+      try {
+        const res = await fetch('/api/me');
+        if (res.status === 401) return; // Não logado, mantém tela de login
+        
+        if (!res.ok) throw new Error('Erro ao autenticar usuário');
+
+        // Altera as telas de login para dashboard
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('logout-btn').classList.remove('hidden');
+        
+        // Carrega a lista real de servidores
+        await loadServers();
+      } catch (error) {
+        console.error("Erro no carregamento do painel:", error);
+      }
     }
 
+    // Carrega e renderiza os servidores
     async function loadServers() {
-      const res = await fetch('/api/servers');
-      const servers = await res.json();
       const container = document.getElementById('server-list');
-      container.innerHTML = '';
+      const countLabel = document.getElementById('server-count');
 
-      servers.forEach(s => {
-        const div = document.createElement('div');
-        div.className = "glass p-8 rounded-3xl hover:scale-105 transition";
-        div.innerHTML = `
-          <h3 class="font-bold text-xl mb-4">${s.name}</h3>
-          <button onclick="openWelcomeEditor('${s.id}')" class="w-full py-4 bg-red-600 hover:bg-red-700 rounded-2xl font-medium">
-            Editar Welcome
-          </button>
+      try {
+        const res = await fetch('/api/servers');
+        if (!res.ok) throw new Error('Não foi possível buscar os servidores');
+
+        const servers = await res.json();
+        container.innerHTML = ''; // Limpa os skeletons de carregamento
+
+        if (!servers || servers.length === 0) {
+          container.innerHTML = `
+            <div class="col-span-full text-center py-12 glass border border-dashed border-zinc-800 rounded-3xl">
+              <i class="fa-solid fa-folder-open text-4xl text-zinc-600 mb-3"></i>
+              <p class="text-zinc-400">Nenhum servidor compatível encontrado.</p>
+            </div>
+          `;
+          countLabel.textContent = '0 Servidores';
+          return;
+        }
+
+        countLabel.textContent = `${servers.length} ${servers.length === 1 ? 'Servidor' : 'Servidores'}`;
+
+        servers.forEach(server => {
+          const card = document.createElement('div');
+          card.className = "glass p-6 rounded-2xl neon-border border border-zinc-800/60 hover:bg-zinc-900/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-44 group";
+          
+          // Tratamento para caso o servidor não tenha ícone próprio
+          const hasIcon = server.icon;
+          const iconMarkup = hasIcon 
+            ? `<img src="https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png" class="w-10 h-10 rounded-full" alt="">`
+            : `<div class="w-10 h-10 bg-zinc-800 border border-zinc-700 text-zinc-400 text-xs font-bold rounded-full flex items-center justify-center uppercase">${server.name.substring(0,2)}</div>`;
+
+          card.innerHTML = `
+            <div class="flex items-center gap-3">
+              ${iconMarkup}
+              <h3 class="font-bold text-lg text-white tracking-wide truncate group-hover:text-red-400 transition-colors">${server.name}</h3>
+            </div>
+            <button onclick="openWelcomeEditor('${server.id}')" class="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-xl shadow-md shadow-red-600/10 hover:shadow-red-500/20 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-sliders text-sm"></i> Configurar Boas-vindas
+            </button>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (error) {
+        console.error("Erro ao carregar servidores:", error);
+        container.innerHTML = `
+          <div class="col-span-full text-center py-12 glass border border-red-900/30 rounded-3xl bg-red-950/5">
+            <i class="fa-solid fa-circle-exclamation text-4xl text-red-500 mb-3"></i>
+            <p class="text-red-400 font-medium">Falha ao carregar servidores.</p>
+            <p class="text-zinc-500 text-xs mt-1">Tente atualizar a página ou fazer login novamente.</p>
+          </div>
         `;
-        container.appendChild(div);
-      });
+        countLabel.textContent = 'Erro';
+      }
     }
 
     function openWelcomeEditor(guildId) {
       window.location.href = `/welcome-editor.html?guildId=${guildId}`;
     }
 
-    window.onload = loadDashboard;
+    // Inicialização segura
+    window.addEventListener('DOMContentLoaded', loadDashboard);
   </script>
 </body>
 </html>
