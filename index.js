@@ -8,6 +8,11 @@ const {
     ChannelType 
 } = require('discord.js');
 const Database = require('better-sqlite3');
+const express = require('express');
+const session = require('express-session');
+const axios = require('axios');
+
+const app = express();
 
 // Inicializa o Banco de Dados SQLite
 const db = new Database('database.sqlite');
@@ -39,7 +44,6 @@ const client = new Client({
 
 // ==================== FUNÇÕES AUXILIARES DO BANCO ====================
 
-// Garante que o usuário existe no banco e retorna seus dados
 const getAccount = (userId) => {
     let row = db.prepare('SELECT * FROM bank WHERE userId = ?').get(userId);
     if (!row) {
@@ -49,13 +53,11 @@ const getAccount = (userId) => {
     return row;
 };
 
-// Atualiza o saldo do usuário
 const updateBalance = (userId, amount) => {
-    getAccount(userId); // Garante que a conta existe
+    getAccount(userId);
     db.prepare('UPDATE bank SET balance = balance + ? WHERE userId = ?').run(amount, userId);
 };
 
-// Define ou atualiza as configurações da guilda
 const getWelcomeConfig = (guildId) => {
     let row = db.prepare('SELECT * FROM welcomeConfig WHERE guildId = ?').get(guildId);
     if (!row) {
@@ -66,7 +68,7 @@ const getWelcomeConfig = (guildId) => {
 };
 
 const updateWelcomeConfig = (guildId, field, value) => {
-    getWelcomeConfig(guildId); // Garante que a configuração existe
+    getWelcomeConfig(guildId);
     db.prepare(`UPDATE welcomeConfig SET ${field} = ? WHERE guildId = ?`).run(value, guildId);
 };
 
@@ -225,7 +227,7 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     // ===================== MODERATION =====================
-    if (commandName === 'ping') return interaction.reply(`🏓 Pong! ${Date.now() - interaction.createdTimestamp}ms https://tenor.com/bsUWw.gif`);
+    if (commandName === 'ping') return interaction.reply(`🏓 Pong! ${Date.now() - interaction.createdTimestamp}ms`);
 
     if (commandName === 'clear') {
         if (!member.permissions.has(PermissionsBitField.Flags.ManageMessages))
@@ -523,116 +525,20 @@ client.on('interactionCreate', async (interaction) => {
 
 client.login(process.env.TOKEN);
 
-// ==================== OAUTH2 ====================
-
-app.use(express.json());
+// ==================== CONFIGURAÇÃO PARA RENDER ====================
 
 app.use(express.static('public'));
 
-app.use(session({ secret: 'arkill-2026', resave: false, saveUninitialized: false }));
+app.get('/', (req, res) => {
 
-const CLIENT_ID = process.env.CLIENT_ID;
-
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-
-const REDIRECT_URI = process.env.REDIRECT_URI;
-
-app.get('/login', (req, res) => {
-
-    const url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify%20guilds`;
-
-    res.redirect(url);
-
-});
-
-app.get('/callback', async (req, res) => {
-
-    const code = req.query.code;
-
-    if (!code) return res.send('Erro');
-
-    try {
-
-        const tokenRes = await axios.post('https://discord.com/api/oauth2/token', new URLSearchParams({
-
-            client_id: CLIENT_ID,
-
-            client_secret: CLIENT_SECRET,
-
-            grant_type: 'authorization_code',
-
-            code: code,
-
-            redirect_uri: REDIRECT_URI
-
-        }));
-
-        const user = await axios.get('https://discord.com/api/users/@me', {
-
-            headers: { Authorization: `Bearer ${tokenRes.data.access_token}` }
-
-        });
-
-        req.session.user = user.data;
-
-        res.redirect('/');
-
-    } catch (e) {
-
-        res.send('Erro ao logar');
-
-    }
-
-});
-
-app.get('/logout', (req, res) => {
-
-    req.session.destroy();
-
-    res.redirect('/');
-
-});
-
-// ==================== API ====================
-
-app.get('/api/me', (req, res) => {
-
-    if (!req.session.user) return res.status(401).json({ error: 'Não logado' });
-
-    res.json(req.session.user);
-
-});
-
-app.get('/api/servers', (req, res) => {
-
-    if (!req.session.user) return res.status(401).json({ error: 'Não logado' });
-
-    const servers = client.guilds.cache.map(g => ({
-
-        id: g.id,
-
-        name: g.name,
-
-        icon: g.iconURL()
-
-    }));
-
-    res.json(servers);
-
-});
-
-// Salvar configuração de welcome
-
-app.post('/api/welcome/:guildId', (req, res) => {
-
-    if (!req.session.user) return res.status(401).json({ error: 'Não logado' });
-
-    welcomeConfigs.set(req.params.guildId, req.body);
-
-    res.json({ success: true, message: 'Configuração salva!' });
+    res.send('ARKILL BOT está online! ⚔️');
 
 });
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => console.log(`🌐 Painel rodando na porta ${PORT}`));
+app.listen(PORT, () => {
+
+    console.log(`🌐 Servidor rodando na porta ${PORT}`);
+
+});
