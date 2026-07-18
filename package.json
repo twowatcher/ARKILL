@@ -1,13 +1,14 @@
 {
-  "name": "phantom-bot",
+  "name": "ARKILL",
   "version": "1.0.0",
-  "description": "PHANTOM Bot Discord",
+  "description": "ARKILL Bot Discord",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "@discordjs/voice": "^0.17.0",
+    "axios": "^1.18.1",
     "better-sqlite3": "^12.11.1",
     "discord.js": "^14.26.4",
     "dotenv": "^17.4.2",
