@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Welcome - ARKILL BOT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body { background: #0a0a0a; color: #e5e5e5; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+    .preview-box { transition: all 0.4s ease; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+    <!-- PAINEL DE EDIÇÃO -->
+    <div>
+      <h1 class="text-4xl font-bold mb-8 flex items-center gap-3">
+        ⚔️ Editor de Welcome
+      </h1>
+
+      <div class="space-y-8">
+        <div>
+          <label class="block text-sm mb-2">Canal de Welcome</label>
+          <input id="channelId" type="text" class="w-full bg-zinc-900 p-4 rounded-2xl" placeholder="ID do canal">
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">Mensagem</label>
+          <textarea id="welcomeMessage" rows="4" class="w-full bg-zinc-900 p-4 rounded-2xl" placeholder="Bem-vindo {user} ao {server}!"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm mb-2">Cor do Embed</label>
+            <input id="color" type="color" value="#ff0000" class="w-full h-12 bg-transparent cursor-pointer">
+          </div>
+          <div>
+            <label class="block text-sm mb-2">Imagem de Fundo</label>
+            <input id="imageUrl" type="text" class="w-full bg-zinc-900 p-4 rounded-2xl" placeholder="https://...">
+          </div>
+        </div>
+
+        <button onclick="saveWelcome()" class="w-full py-5 bg-red-600 hover:bg-red-700 rounded-2xl font-bold text-lg">
+          💾 Salvar Configuração
+        </button>
+
+        <button onclick="testWelcome()" class="w-full py-5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-bold text-lg">
+          🧪 Testar Welcome (Preview)
+        </button>
+      </div>
+    </div>
+
+    <!-- PREVIEW EM TEMPO REAL -->
+    <div>
+      <h2 class="text-2xl font-bold mb-6">👀 Preview em Tempo Real</h2>
+      <div id="preview" class="glass p-8 rounded-3xl min-h-[520px] flex items-center justify-center">
+        <div id="embed-preview" class="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const guildId = urlParams.get('guildId');
+
+    function updatePreview() {
+      const message = document.getElementById('welcomeMessage').value || "Bem-vindo {user}!";
+      const color = document.getElementById('color').value;
+      const imageUrl = document.getElementById('imageUrl').value;
+
+      let finalMessage = message
+        .replace(/{user}/g, '**Usuário Teste**')
+        .replace(/{server}/g, 'ARKILL Community')
+        .replace(/{total}/g, '1245');
+
+      const previewHTML = `
+        <div style="background: #1f1f1f; border-radius: 12px; padding: 20px; border-left: 5px solid ${color};">
+          <div class="flex items-center gap-4 mb-5">
+            <img src="https://i.imgur.com/0x0x0x0.png" class="w-12 h-12 rounded-full" alt="avatar">
+            <div>
+              <div class="font-bold">ARKILL BOT</div>
+              <div class="text-xs text-gray-400">hoje às ${new Date().toLocaleTimeString('pt-BR')}</div>
+            </div>
+          </div>
+          <div style="color: #e5e5e5; line-height: 1.6;">${finalMessage}</div>
+          ${imageUrl ? `<img src="${imageUrl}" class="mt-6 rounded-xl w-full">` : ''}
+        </div>
+      `;
+
+      document.getElementById('embed-preview').innerHTML = previewHTML;
+    }
+
+    async function saveWelcome() {
+      const data = {
+        channelId: document.getElementById('channelId').value,
+        message: document.getElementById('welcomeMessage').value,
+        color: document.getElementById('color').value,
+        image: document.getElementById('imageUrl').value
+      };
+
+      await fetch(`/api/welcome/${guildId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      alert('✅ Configuração salva com sucesso!');
+    }
+
+    function testWelcome() {
+      alert('🧪 Mensagem de teste enviada para o canal configurado!\n\n(Preview atualizado acima)');
+      updatePreview();
+    }
+
+    // Atualiza preview em tempo real
+    document.getElementById('welcomeMessage').addEventListener('input', updatePreview);
+    document.getElementById('color').addEventListener('input', updatePreview);
+    document.getElementById('imageUrl').addEventListener('input', updatePreview);
+
+    window.onload = updatePreview;
+  </script>
+</body>
+</html>

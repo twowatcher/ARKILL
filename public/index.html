@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARKILL BOT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body { background: #0a0a0a; color: #e5e5e5; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-6xl mx-auto p-8">
+    <div class="flex justify-between items-center mb-12">
+      <h1 class="text-5xl font-bold">⚔️ ARKILL BOT</h1>
+      <button onclick="logout()" class="hidden px-6 py-3 bg-red-600 rounded-2xl" id="logout-btn">Sair</button>
+    </div>
+
+    <div id="login-screen">
+      <button onclick="login()" class="w-full max-w-md mx-auto block bg-indigo-600 py-6 text-xl rounded-3xl hover:bg-indigo-700">
+        Entrar com Discord
+      </button>
+    </div>
+
+    <div id="dashboard" class="hidden">
+      <h2 class="text-3xl mb-8">Seus Servidores</h2>
+      <div id="server-list" class="grid md:grid-cols-2 gap-6"></div>
+    </div>
+  </div>
+
+  <script>
+    async function login() { window.location.href = '/login'; }
+    async function logout() { window.location.href = '/logout'; }
+
+    async function loadDashboard() {
+      const res = await fetch('/api/me');
+      if (res.status === 401) return;
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('logout-btn').classList.remove('hidden');
+      loadServers();
+    }
+
+    async function loadServers() {
+      const res = await fetch('/api/servers');
+      const servers = await res.json();
+      const container = document.getElementById('server-list');
+      container.innerHTML = '';
+
+      servers.forEach(s => {
+        const div = document.createElement('div');
+        div.className = "glass p-8 rounded-3xl hover:scale-105 transition";
+        div.innerHTML = `
+          <h3 class="font-bold text-xl mb-4">${s.name}</h3>
+          <button onclick="openWelcomeEditor('${s.id}')" class="w-full py-4 bg-red-600 hover:bg-red-700 rounded-2xl font-medium">
+            Editar Welcome
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function openWelcomeEditor(guildId) {
+      window.location.href = `/welcome-editor.html?guildId=${guildId}`;
+    }
+
+    window.onload = loadDashboard;
+  </script>
+</body>
+</html>
